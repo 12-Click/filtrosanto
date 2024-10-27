@@ -56,7 +56,7 @@
         <video id="video" playsinline autoplay muted></video> <!-- Added muted attribute -->
         <img id="halo" class="overlay" src="images/halo.gif" alt="Halo">
         <img id="text" class="overlay" src="images/text.gif" alt="Text"> <!-- Change to your GIF -->
-        <button id="screenshotButton">Take Screenshot</button> <!-- Screenshot button -->
+        <button id="screenshotButton">Captura tu Selfie</button> <!-- Screenshot button -->
     </div>
     
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils"></script>
@@ -130,16 +130,23 @@
             const scaleX = canvas.width / video.clientWidth;
             const scaleY = canvas.height / video.clientHeight;
 
-            // Draw the halo and text overlays in the correct position
+            // Draw the halo overlay in the correct position
             if (halo.style.display === 'block') {
                 const haloX = parseFloat(halo.style.left) * scaleX - (halo.clientWidth * scaleX) / 2;
                 const haloY = parseFloat(halo.style.top) * scaleY;
                 context.drawImage(halo, haloX, haloY, halo.clientWidth * scaleX, halo.clientHeight * scaleY);
             }
+            // Draw the text overlay in the correct position
             if (text.style.display === 'block') {
                 const textX = parseFloat(text.style.left) * scaleX - (text.clientWidth * scaleX) / 2;
                 const textY = parseFloat(text.style.top) * scaleY;
+
+                // Flip the context for the text overlay as well
+                context.save();
+                context.translate(canvas.width, 0);
+                context.scale(-1, 1);
                 context.drawImage(text, textX, textY, text.clientWidth * scaleX, text.clientHeight * scaleY);
+                context.restore();
             }
 
             // Convert canvas to an image and trigger download
