@@ -3,33 +3,31 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>San Francisco Javier Face Filter</title>
+  <title>Mobile Optimized Face Filter</title>
   <style>
-    /* Container styling */
+    /* Container styling for responsiveness */
     #container {
       position: relative;
       width: 100%;
-      max-width: 600px;
+      max-width: 400px;
       margin: 0 auto;
     }
-    /* Video feed */
-    #video {
+    /* Video and Canvas styling for smaller devices */
+    #video, #overlay {
       width: 100%;
-      display: block;
+      height: auto;
     }
-    /* Canvas for filter overlay */
-    #overlay {
-      position: absolute;
-      top: 0;
-      left: 0;
-    }
-    /* Take picture button */
+    /* Take Picture button with touch-friendly styling */
     #take-picture {
       display: block;
-      margin: 20px auto;
-      padding: 10px 20px;
-      font-size: 16px;
+      margin: 10px auto;
+      padding: 12px 24px;
+      font-size: 18px;
       cursor: pointer;
+      border-radius: 8px;
+      background-color: #3498db;
+      color: white;
+      border: none;
     }
     /* Display captured image */
     #captured-image {
@@ -67,16 +65,18 @@
     const capturedImage = document.getElementById('captured-image');
     const takePictureButton = document.getElementById('take-picture');
 
-    // Load FaceAPI.js models from CDN
+    // Load FaceAPI.js models from CDN with TinyFaceDetector for performance
     async function loadModels() {
       await faceapi.nets.tinyFaceDetector.loadFromUri('https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/');
       await faceapi.nets.faceLandmark68Net.loadFromUri('https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/');
     }
 
-    // Initialize camera
+    // Initialize camera with low resolution for better performance
     async function startVideo() {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: {} });
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { width: 360, height: 480 }  // Lower resolution for mobile
+        });
         video.srcObject = stream;
       } catch (error) {
         console.error("Error accessing camera:", error);
@@ -96,9 +96,9 @@
       canvas.style.animation = 'glow 2s infinite';
     }
 
-    // Detect face and apply filter
+    // Detect face and apply filter with optimized options
     async function detectFace() {
-      const options = new faceapi.TinyFaceDetectorOptions();
+      const options = new faceapi.TinyFaceDetectorOptions({ inputSize: 128, scoreThreshold: 0.5 });  // Smaller input size for speed
       const result = await faceapi.detectSingleFace(video, options).withFaceLandmarks();
 
       if (result) {
@@ -114,7 +114,7 @@
 
         if (nose) {
           const [noseX, noseY] = [nose[3].x, nose[3].y];
-          drawHalo(noseX, noseY, 60);  // Adjust halo size as needed
+          drawHalo(noseX, noseY, 40);  // Adjust halo size for mobile
         }
       }
 
@@ -123,19 +123,14 @@
 
     // Capture image with filter
     function captureImage() {
-      // Create an offscreen canvas to combine video and overlay canvas
       const offscreenCanvas = document.createElement('canvas');
       offscreenCanvas.width = video.videoWidth;
       offscreenCanvas.height = video.videoHeight;
       const offscreenContext = offscreenCanvas.getContext('2d');
 
-      // Draw video frame to the offscreen canvas
       offscreenContext.drawImage(video, 0, 0, offscreenCanvas.width, offscreenCanvas.height);
-      
-      // Draw overlay (filter) canvas on top
       offscreenContext.drawImage(canvas, 0, 0, offscreenCanvas.width, offscreenCanvas.height);
 
-      // Convert to data URL and display the image
       const imageDataUrl = offscreenCanvas.toDataURL('image/png');
       capturedImage.src = imageDataUrl;
       capturedImage.style.display = 'block';
