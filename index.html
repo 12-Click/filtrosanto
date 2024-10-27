@@ -40,12 +40,18 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 200px; /* Adjust as needed */
-            height: 200px; /* Adjust as needed */
-            background: rgba(255, 215, 0, 0.5); /* Gold overlay */
-            border-radius: 50%;
-            box-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+            width: 200px; /* Adjust for the halo size */
+            height: 200px; /* Adjust for the halo size */
+            background: url('images/angel.png') no-repeat center center; /* Use your halo image */
+            background-size: cover; /* Adjust to fit */
             pointer-events: none; /* So it doesn't block the video */
+            animation: pulse 1.5s infinite; /* Optional pulse effect */
+        }
+
+        @keyframes pulse {
+            0% { transform: translate(-50%, -50%) scale(1); }
+            50% { transform: translate(-50%, -50%) scale(1.1); }
+            100% { transform: translate(-50%, -50%) scale(1); }
         }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
