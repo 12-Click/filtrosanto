@@ -31,25 +31,10 @@
             object-fit: cover;
         }
         img.overlay {
-            display: none; /* Hide initially */
             pointer-events: none;
             width: 150px; /* Adjust size of GIF overlay */
             position: absolute;
             transform: translate(-50%, -100%); /* Center horizontally, position above face */
-        }
-        #snapshot-btn {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            padding: 10px 20px;
-            background-color: #007bff;
-            color: white;
-            font-size: 16px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            z-index: 10;
         }
     </style>
 </head>
@@ -62,10 +47,7 @@
         <canvas id="canvas"></canvas>
 
         <!-- GIF Overlay as an Image -->
-        <img src="images/halo.gif" alt="Halo Overlay" class="overlay" id="overlay"> <!-- Replace with your GIF path -->
-
-        <!-- Snapshot Button -->
-        <button id="snapshot-btn">Take Snapshot</button>
+        <img src="images/halo2.gif" alt="Halo Overlay" class="overlay" id="overlay"> <!-- Replace with your GIF path -->
     </div>
 
     <!-- Include MediaPipe FaceMesh -->
@@ -76,7 +58,6 @@
         const video = document.getElementById('video');
         const canvas = document.getElementById('canvas');
         const overlay = document.getElementById('overlay');
-        const snapshotBtn = document.getElementById('snapshot-btn');
         const ctx = canvas.getContext('2d');
 
         canvas.width = window.innerWidth;
@@ -117,60 +98,32 @@
 
         // Function to handle face mesh results
         function onResults(results) {
+            // Clear canvas for drawing
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
                 const landmarks = results.multiFaceLandmarks[0];
+
+                // Use landmark at the forehead for halo position (e.g., landmark #10)
                 const forehead = landmarks[10];
                 const x = forehead.x * canvas.width;
                 const y = forehead.y * canvas.height - 80; // Offset halo above the head
 
+                // Position the halo overlay image
                 overlay.style.left = `${x}px`;
                 overlay.style.top = `${y}px`;
-                overlay.style.display = 'block';
 
-                drawConnectors(ctx, landmarks, FaceMesh.FACEMESH_TESSELATION, { color: '#C0C0C070', lineWidth: 1 });
+                // (Optional) Draw face mesh on canvas for visualization
+                drawConnectors(ctx, landmarks, FaceMesh.FACEMESH_TESSELATION,
+                    { color: '#C0C0C070', lineWidth: 1 });
                 drawConnectors(ctx, landmarks, FaceMesh.FACEMESH_RIGHT_EYE, { color: '#FF3030' });
                 drawConnectors(ctx, landmarks, FaceMesh.FACEMESH_LEFT_EYE, { color: '#30FF30' });
                 drawConnectors(ctx, landmarks, FaceMesh.FACEMESH_LIPS, { color: '#E0E0E0' });
-            } else {
-                overlay.style.display = 'none';
             }
         }
-
-        // Take snapshot and save to device
-        snapshotBtn.addEventListener('click', async () => {
-            const snapshotCanvas = document.createElement('canvas');
-            snapshotCanvas.width = canvas.width;
-            snapshotCanvas.height = canvas.height;
-            const snapshotCtx = snapshotCanvas.getContext('2d');
-
-            snapshotCtx.drawImage(video, 0, 0, snapshotCanvas.width, snapshotCanvas.height);
-
-            const haloX = parseFloat(overlay.style.left) || 0;
-            const haloY = parseFloat(overlay.style.top) || 0;
-            snapshotCtx.drawImage(overlay, haloX - overlay.width / 2, haloY - overlay.height);
-
-            // For mobile, create an image URL and open it in a new tab
-            const imageURL = snapshotCanvas.toDataURL('image/png');
-
-            // Create a temporary anchor element for download
-            const link = document.createElement('a');
-            link.href = imageURL;
-            link.download = 'snapshot.png';
-            
-            // Append the link to the body (necessary for Firefox)
-            document.body.appendChild(link);
-            link.click(); // Trigger the download
-            document.body.removeChild(link); // Remove the link after download
-
-            // For mobile devices, using `window.open` might be necessary
-            if (/Mobi|Android/i.test(navigator.userAgent)) {
-                window.open(imageURL);
-            }
-        });
 
         startCamera();
     </script>
 </body>
 </html>
+
