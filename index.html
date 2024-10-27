@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D Face Filter - San Francisco Javier</title>
+    <title>San Francisco Javier</title>
     <style>
         body {
             margin: 0;
@@ -59,7 +59,7 @@
 <body>
     <video id="video" autoplay playsinline></video>
     <canvas id="canvas"></canvas>
-    <img class="capture-icon" id="capture" src="URL_TO_CAMERA_ICON.png" alt="Capture Photo Icon" /> <!-- Replace with your camera icon URL -->
+    <img class="capture-icon" id="capture" src="images/angel.png" alt="Capture Photo Icon" /> <!-- Replace with your camera icon URL -->
     <img id="capturedPhoto" alt="Captured Photo" />
     <script>
         const video = document.getElementById('video');
@@ -69,9 +69,9 @@
 
         // Load halo and wings images
         const haloImage = new Image();
-        haloImage.src = 'URL_TO_YOUR_HALO_IMAGE.png'; // Replace with the URL of your halo image
+        haloImage.src = 'images/angel.png'; // Replace with the URL of your halo image
         const wingsImage = new Image();
-        wingsImage.src = 'URL_TO_YOUR_WINGS_IMAGE.png'; // Replace with the URL of your wings image
+        wingsImage.src = 'images/angel.png'; // Replace with the URL of your wings image
 
         async function setupCamera() {
             try {
