@@ -37,9 +37,9 @@
 
         .overlay {
             position: absolute;
-            width: 200px; /* Adjust for the halo size */
-            height: 200px; /* Adjust for the halo size */
-            background: url('images/angel.png') no-repeat center center; /* Use your halo image */
+            width: 200px; /* Adjust for halo size */
+            height: 200px; /* Adjust for halo size */
+            background: url('halo.png') no-repeat center center; /* Use your halo image */
             background-size: cover; /* Adjust to fit */
             pointer-events: none; /* So it doesn't block the video */
             transform: translate(-50%, -50%); /* Center the overlay */
@@ -61,21 +61,22 @@
         const ctx = canvas.getContext('2d');
 
         // Set up the video stream
-        navigator.mediaDevices.getUserMedia({ video: true })
-            .then(stream => {
-                video.srcObject = stream;
-            })
-            .catch(err => {
-                console.error('Error accessing the camera: ', err);
-            });
+        async function setupCamera() {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            video.srcObject = stream;
 
-        // Load the face mesh model
-        async function loadFaceMesh() {
-            const model = await faceLandmarksDetection.load(faceLandmarksDetection.SupportedPackages.mediapipeFacemesh);
-            detectFaces(model);
+            return new Promise((resolve) => {
+                video.onloadedmetadata = () => {
+                    resolve(video);
+                };
+            });
         }
 
-        // Detect faces and update the overlay position
+        async function loadFaceMesh() {
+            const model = await faceLandmarksDetection.load(faceLandmarksDetection.SupportedPackages.mediapipeFacemesh);
+            return model;
+        }
+
         async function detectFaces(model) {
             while (true) {
                 const predictions = await model.estimateFaces({ input: video });
@@ -89,7 +90,7 @@
 
                     // Position the halo slightly above the detected face
                     halo.style.left = `${x}px`;
-                    halo.style.top = `${y - 100}px`; // Adjust 100 to position it higher above the face
+                    halo.style.top = `${y - 100}px`; // Adjust to position higher above the face
                 } else {
                     halo.style.left = `50%`; // Reset position if no face detected
                     halo.style.top = `50%`; // Reset position if no face detected
@@ -99,11 +100,15 @@
             }
         }
 
-        video.addEventListener('loadedmetadata', () => {
+        async function main() {
+            await setupCamera();
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
-            loadFaceMesh();
-        });
+            const model = await loadFaceMesh();
+            detectFaces(model);
+        }
+
+        main();
     </script>
 </body>
 </html>
