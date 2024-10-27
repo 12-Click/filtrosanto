@@ -35,21 +35,14 @@
             z-index: 1; /* Ensure canvas is on top of video */
         }
 
-        button {
-            position: relative;
-            z-index: 2; /* Ensure button is above the canvas */
-            margin-top: 20px;
-            padding: 10px 20px;
-            font-size: 16px;
-            background-color: #4CAF50; /* Green */
-            color: white;
-            border: none;
-            border-radius: 5px;
+        .capture-icon {
+            position: absolute;
+            bottom: 20px; /* Position from bottom */
+            right: 20px; /* Position from right */
             cursor: pointer;
-        }
-
-        button:hover {
-            background-color: #45a049; /* Darker green on hover */
+            width: 60px; /* Size of the icon */
+            height: auto; /* Maintain aspect ratio */
+            z-index: 2; /* Ensure icon is above the canvas */
         }
 
         img {
@@ -65,14 +58,17 @@
 <body>
     <video id="video" autoplay playsinline></video>
     <canvas id="canvas"></canvas>
-    <button id="capture">Capture Photo</button>
+    <img class="capture-icon" id="capture" src="URL_TO_CAMERA_ICON.png" alt="Capture Photo Icon" /> <!-- Replace with your camera icon URL -->
     <img id="capturedPhoto" alt="Captured Photo" />
     <script>
         const video = document.getElementById('video');
         const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
-        const captureButton = document.getElementById('capture');
+        const captureIcon = document.getElementById('capture');
         const capturedPhoto = document.getElementById('capturedPhoto');
+
+        // Load halo image
+        const haloImage = new Image();
+        haloImage.src = 'URL_TO_YOUR_HALO_IMAGE.png'; // Replace with the URL of your halo image
 
         async function setupCamera() {
             try {
@@ -96,27 +92,9 @@
             return await faceLandmarksDetection.load(model);
         }
 
-        function drawHalo(x, y, radius) {
-            ctx.fillStyle = `rgba(255, 223, 0, 0.7)`; // Gold color
-            ctx.beginPath();
-            ctx.arc(x, y, radius, 0, Math.PI * 2);
-            ctx.fill();
-
-            ctx.strokeStyle = `rgba(255, 223, 0, 1)`; // Gold stroke
-            ctx.lineWidth = 5; // Set the width of the stroke
-            ctx.stroke(); // Draw the outline
-        }
-
-        function drawWings(x, y) {
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.6)'; // White color for wings
-            ctx.beginPath();
-            // Left wing
-            ctx.moveTo(x - 30, y);
-            ctx.bezierCurveTo(x - 80, y - 40, x - 80, y + 40, x - 30, y);
-            // Right wing
-            ctx.moveTo(x + 30, y);
-            ctx.bezierCurveTo(x + 80, y - 40, x + 80, y + 40, x + 30, y);
-            ctx.fill();
+        function drawHalo(x, y, size) {
+            // Draw the halo image centered at (x, y)
+            ctx.drawImage(haloImage, x - size / 2, y - size / 2, size, size);
         }
 
         async function main() {
@@ -137,16 +115,13 @@
                     predictions.forEach((prediction) => {
                         const keypoints = prediction.scaledMesh;
 
-                        // Calculate the position for the halo and wings
+                        // Calculate the position for the halo
                         const x = keypoints[30][0]; // Nose tip
                         const y = keypoints[30][1] - 50; // Position above the head for the halo
 
-                        // Animate the halo size to create a pulsing effect
-                        const haloRadius = 40 + Math.sin(pulse) * 10; // Pulsating radius
-                        drawHalo(x, y, haloRadius); // Draw animated halo
-
-                        // Draw wings
-                        drawWings(x, y);
+                        // Animate size to create a pulsing effect
+                        const haloSize = 100 + Math.sin(pulse) * 20; // Pulsating size
+                        drawHalo(x, y, haloSize); // Draw halo with image
                     });
                 }
 
@@ -158,9 +133,16 @@
         }
 
         // Capture photo functionality
-        captureButton.addEventListener('click', () => {
+        captureIcon.addEventListener('click', () => {
             const photo = canvas.toDataURL('image/png'); // Capture the canvas as a PNG
-            capturedPhoto.src = photo; // Set the src of the img element to the captured photo
+            
+            // Create a temporary link to trigger the download
+            const link = document.createElement('a');
+            link.href = photo; // Set the link's href to the photo data URL
+            link.download = 'captured_photo.png'; // Name for the downloaded file
+            document.body.appendChild(link); // Append link to the document
+            link.click(); // Trigger the download
+            document.body.removeChild(link); // Remove the link after triggering download
         });
 
         // Resize canvas when window resizes
@@ -169,7 +151,9 @@
             canvas.height = window.innerHeight; // Update canvas height
         });
 
-        main();
+        haloImage.onload = () => {
+            main(); // Start the main function only after the halo image is loaded
+        };
     </script>
 </body>
 </html>
