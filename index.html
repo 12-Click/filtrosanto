@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
-    <title>Face Tracking Halo with Snapshot</title>
+    <title>Jovenes Misioneros!</title>
     <style>
         * {
             margin: 0;
@@ -72,13 +72,13 @@
         haloImage.src = 'images/halo.gif'; // Replace with your actual path to the halo GIF
 
         const chinImage = new Image();
-        chinImage.src = 'images/chin_text.gif'; // Replace with your actual path to the chin text GIF
+        chinImage.src = 'images/text.gif'; // Replace with your actual path to the chin text GIF
 
         // Set desired dimensions for the GIFs
-        const haloWidth = 100; // Adjust width for the halo image
-        const haloHeight = 50; // Adjust height for the halo image
-        const chinWidth = 80;  // Adjust width for the chin text image
-        const chinHeight = 40; // Adjust height for the chin text image
+        const haloWidth = 120; // Adjust width for the halo image
+        const haloHeight = 60; // Adjust height for the halo image
+        const chinWidth = 100;  // Adjust width for the chin text image
+        const chinHeight = 50; // Adjust height for the chin text image
 
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
@@ -127,7 +127,7 @@
                 const xChin = chin.x * canvas.width;
                 const yChin = chin.y * canvas.height + 40; // Offset below chin
 
-                // Draw scaled GIFs on the live feed canvas
+                // Draw GIFs on the live feed canvas
                 if (haloImage.complete) {
                     ctx.drawImage(haloImage, xHalo - haloWidth / 2, yHalo - haloHeight, haloWidth, haloHeight);
                 }
@@ -135,6 +135,9 @@
                     ctx.drawImage(chinImage, xChin - chinWidth / 2, yChin, chinWidth, chinHeight);
                 }
             }
+
+            // Call requestAnimationFrame to keep the GIFs moving
+            requestAnimationFrame(() => onResults(results));
         }
 
         snapshotBtn.addEventListener('click', () => {
@@ -147,7 +150,7 @@
 
             snapshotCtx.drawImage(video, 0, 0, snapshotCanvas.width, snapshotCanvas.height);
 
-            // Draw scaled GIFs on the snapshot canvas
+            // Draw GIFs on the snapshot canvas
             const forehead = currentLandmarks[10];
             const xHalo = forehead.x * snapshotCanvas.width;
             const yHalo = forehead.y * snapshotCanvas.height - 80; // Offset for halo
