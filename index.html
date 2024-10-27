@@ -1,126 +1,104 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Face Lens with Halo and Chin GIF</title>
-    <style>
-        body, html {
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background-color: #000;
-            overflow: hidden;
-        }
-        .container {
-            position: relative;
-            width: 100vw;
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        #video {
-            position: absolute;
-            width: 100vw;
-            height: 100vh;
-            object-fit: cover;
-        }
-        #overlay {
-            position: absolute;
-            width: 100vw;
-            height: 100vh;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AR Face Lens</title>
+  <style>
+    /* Full screen and responsive setup */
+    body, html {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: #000;
+    }
+    #video {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: 1;
+    }
+    #halo, #text {
+      position: absolute;
+      z-index: 2;
+    }
+    #halo {
+      width: 150px;
+    }
+    #text {
+      width: 200px;
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <video id="video" autoplay playsinline></video>
-        <canvas id="overlay"></canvas>
-    </div>
-    
-    <!-- Load face-api.js from CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/face-api.js"></script>
 
-    <script>
-        const video = document.getElementById('video');
-        const overlay = document.getElementById('overlay');
-        const ctx = overlay.getContext('2d');
+<!-- Video feed from camera -->
+<video id="video" autoplay muted playsinline></video>
 
-        // Load face-api.js models from URLs
-        async function loadModels() {
-            const modelUrl = 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js/models';
-            await faceapi.nets.tinyFaceDetector.loadFromUri(modelUrl);
-            await faceapi.nets.faceLandmark68TinyNet.loadFromUri(modelUrl);
-        }
+<!-- GIF elements -->
+<img id="halo" src="images/halo.gif" alt="Halo GIF">
+<img id="text" src="images/text.gif" alt="Text GIF">
 
-        // Start video stream
-        async function startVideo() {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: {} });
-            video.srcObject = stream;
-        }
+<!-- JavaScript for face tracking -->
+<script src="https://cdn.jsdelivr.net/npm/clmtrackr@1.1.2/build/clmtrackr.min.js"></script>
+<script>
+  const video = document.getElementById('video');
+  const halo = document.getElementById('halo');
+  const text = document.getElementById('text');
+  let tracker;
 
-        // Draw halo and chin GIF based on detected face
-        async function detectFace() {
-            const detectionOptions = new faceapi.TinyFaceDetectorOptions();
-            const detections = await faceapi.detectAllFaces(video, detectionOptions)
-                                            .withFaceLandmarks(true);
+  // Set up the video stream from the user's camera
+  async function startVideo() {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      video.srcObject = stream;
+    } catch (error) {
+      console.error("Camera not accessible:", error);
+    }
+  }
 
-            // Clear previous drawings
-            ctx.clearRect(0, 0, overlay.width, overlay.height);
+  // Initialize clmtrackr
+  function startTracking() {
+    tracker = new clm.tracker();
+    tracker.init();
+    tracker.start(video);
 
-            detections.forEach(detection => {
-                const { landmarks } = detection;
+    // Continuously update GIF positions
+    requestAnimationFrame(updatePositions);
+  }
 
-                // Get key points for placing images and text
-                const chin = landmarks.getMouth()[3]; // Chin point (below mouth)
-                const haloPosition = landmarks.getNose()[0]; // Nose (for halo above head)
+  // Update positions based on tracking points
+  function updatePositions() {
+    const positions = tracker.getCurrentPosition();
 
-                const haloY = haloPosition.y - 120;
-                const haloX = haloPosition.x - 50;
+    if (positions) {
+      // Position halo slightly above the head (forehead point)
+      const foreheadX = positions[33][0];
+      const foreheadY = positions[33][1];
+      halo.style.left = `${foreheadX - halo.width / 2}px`;
+      halo.style.top = `${foreheadY - halo.height - 20}px`;
 
-                const chinY = chin.y + 30;
-                const chinX = chin.x - 40;
+      // Position text under the chin (chin point)
+      const chinX = positions[7][0];
+      const chinY = positions[7][1];
+      text.style.left = `${chinX - text.width / 2}px`;
+      text.style.top = `${chinY + 10}px`;
+    }
 
-                // Draw halo GIF above head
-                const haloImg = new Image();
-                haloImg.src = 'images/halo.gif'; // Replace with your halo GIF URL
-                haloImg.onload = () => {
-                    ctx.drawImage(haloImg, haloX, haloY, 150, 50);
-                };
+    requestAnimationFrame(updatePositions);
+  }
 
-                // Draw chin GIF under the chin
-                const chinGif = new Image();
-                chinGif.src = 'images/text.gif'; // Replace with your chin GIF URL
-                chinGif.onload = () => {
-                    ctx.drawImage(chinGif, chinX, chinY, 80, 50);
-                };
-
-                // Draw text under the chin
-                ctx.fillStyle = "#FFF";
-                ctx.font = "20px Arial";
-                ctx.textAlign = "center";
-                ctx.fillText("Hello!", chin.x, chin.y + 80);
-            });
-        }
-
-        // Initialize
-        async function init() {
-            await loadModels();
-            await startVideo();
-
-            video.addEventListener('play', () => {
-                overlay.width = video.videoWidth;
-                overlay.height = video.videoHeight;
-
-                setInterval(detectFace, 100);
-            });
-        }
-
-        init();
-    </script>
+  // Start video and tracking when the page loads
+  window.onload = async () => {
+    await startVideo();
+    startTracking();
+  };
+</script>
 </body>
 </html>
