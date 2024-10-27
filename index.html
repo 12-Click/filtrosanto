@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D Face Filter - San Francisco Javier</title>
+    <title>San Francisco Javier</title>
     <style>
         body {
             margin: 0;
@@ -18,9 +18,12 @@
         }
 
         video {
-            display: block; /* Show the video element */
-            width: 100%; /* Make the video take full width */
-            height: auto; /* Maintain aspect ratio */
+            position: absolute; /* Set video to absolute position */
+            top: 0;
+            left: 0;
+            width: 100vw; /* Make the video take full width */
+            height: 100vh; /* Make the video take full height */
+            object-fit: cover; /* Cover the entire area */
         }
 
         canvas {
@@ -28,14 +31,17 @@
             top: 0;
             left: 0;
             z-index: 1; /* Ensure canvas is on top of video */
+            width: 100vw; /* Full width */
+            height: 100vh; /* Full height */
         }
 
         .icon {
-            position: relative;
-            z-index: 2; /* Ensure icon is above the canvas */
-            margin-top: 20px;
+            position: absolute;
+            top: 20px; /* Distance from the top */
+            right: 20px; /* Distance from the right */
             width: 50px; /* Adjust icon size */
             cursor: pointer;
+            z-index: 2; /* Ensure icon is above the canvas */
         }
 
         img {
@@ -51,7 +57,7 @@
 <body>
     <video id="video" autoplay playsinline></video>
     <canvas id="canvas"></canvas>
-    <img id="cameraIcon" class="icon" src="images/angel.png" alt="Capture" /> <!-- Replace with your camera icon URL -->
+    <img id="cameraIcon" class="icon" src="https://your-image-url.com/camera-icon.png" alt="Capture" /> <!-- Replace with your camera icon URL -->
     <img id="capturedPhoto" alt="Captured Photo" />
     <script>
         const video = document.getElementById('video');
