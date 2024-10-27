@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
-    <title>Face Tracking Halo with GIFs</title>
+    <title>Jovenes Misioneros!</title>
     <style>
         * {
             margin: 0;
@@ -103,15 +103,19 @@
             if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
                 const landmarks = results.multiFaceLandmarks[0];
 
+                // Calculate scaling factors for mobile screens
+                const scalingFactorX = canvas.width;
+                const scalingFactorY = canvas.height;
+
                 // Calculate halo position above the forehead
                 const forehead = landmarks[10];
-                const xHalo = forehead.x * canvas.width - haloWidth / 2;
-                const yHalo = forehead.y * canvas.height - haloHeight - 60;
+                const xHalo = forehead.x * scalingFactorX - haloWidth / 2;
+                const yHalo = forehead.y * scalingFactorY - haloHeight - 100;
 
                 // Calculate chin position below the chin
                 const chin = landmarks[152];
-                const xChin = chin.x * canvas.width - chinWidth / 2;
-                const yChin = chin.y * canvas.height + 20;
+                const xChin = chin.x * scalingFactorX - chinWidth / 2;
+                const yChin = chin.y * scalingFactorY + 30;
 
                 // Show and position the GIFs
                 haloGif.style.display = 'block';
