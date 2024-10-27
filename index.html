@@ -67,14 +67,14 @@
 
         let currentLandmarks = null;
 
-        // Load GIFs as Image objects
+        // Load PNGs as Image objects
         const haloImage = new Image();
-        haloImage.src = 'images/halo.gif'; // Replace with your actual path to the halo GIF
+        haloImage.src = 'images/flame.png'; // Replace with your actual path to the halo PNG
 
         const chinImage = new Image();
-        chinImage.src = 'images/text.gif'; // Replace with your actual path to the chin text GIF
+        chinImage.src = 'images/banner.png'; // Replace with your actual path to the chin text PNG
 
-        // Set desired dimensions for the GIFs
+        // Set desired dimensions for the PNGs
         const haloWidth = 120; // Adjust width for the halo image
         const haloHeight = 60; // Adjust height for the halo image
         const chinWidth = 100;  // Adjust width for the chin text image
@@ -113,12 +113,10 @@
         camera.start();
 
         function onResults(results) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
             if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
                 currentLandmarks = results.multiFaceLandmarks[0];
-
-                // Clear the canvas for the video feed
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                ctx.drawImage(video, 0, 0, canvas.width, canvas.height); // Draw the video
 
                 // Calculate positions for halo and chin text based on landmarks
                 const forehead = currentLandmarks[10];
@@ -129,7 +127,7 @@
                 const xChin = chin.x * canvas.width;
                 const yChin = chin.y * canvas.height + 40; // Offset below chin
 
-                // Draw GIFs on the live feed canvas
+                // Draw PNGs on the live feed canvas
                 if (haloImage.complete) {
                     ctx.drawImage(haloImage, xHalo - haloWidth / 2, yHalo - haloHeight, haloWidth, haloHeight);
                 }
@@ -138,7 +136,7 @@
                 }
             }
 
-            // Call requestAnimationFrame to keep the loop going
+            // Call requestAnimationFrame to keep the PNGs moving
             requestAnimationFrame(() => onResults(results));
         }
 
@@ -152,7 +150,7 @@
 
             snapshotCtx.drawImage(video, 0, 0, snapshotCanvas.width, snapshotCanvas.height);
 
-            // Draw GIFs on the snapshot canvas
+            // Draw PNGs on the snapshot canvas
             const forehead = currentLandmarks[10];
             const xHalo = forehead.x * snapshotCanvas.width;
             const yHalo = forehead.y * snapshotCanvas.height - 80; // Offset for halo
