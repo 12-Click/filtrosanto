@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>San Francisco Javier Face Lens</title>
+    <title>Face Tracking Halo</title>
     <style>
         * {
             margin: 0;
@@ -24,7 +24,7 @@
             height: 100vh;
             width: 100%;
         }
-        video {
+        video, canvas {
             position: absolute;
             width: 100vw;
             height: 100vh;
@@ -32,11 +32,9 @@
         }
         img.overlay {
             pointer-events: none;
-            width: 150px; /* Base width of GIF overlay, adjust as needed */
+            width: 150px; /* Adjust size of GIF overlay */
             position: absolute;
-            top: 25%; /* Adjust this to position the GIF above the face */
-            left: 50%;
-            transform: translateX(-50%);
+            transform: translate(-50%, -100%); /* Center horizontally, position above face */
         }
     </style>
 </head>
@@ -45,14 +43,25 @@
         <!-- Camera Feed -->
         <video id="video" autoplay playsinline></video>
 
+        <!-- Canvas for FaceMesh drawing (optional) -->
+        <canvas id="canvas"></canvas>
+
         <!-- GIF Overlay as an Image -->
         <img src="images/halo.gif" alt="Halo Overlay" class="overlay" id="overlay"> <!-- Replace with your GIF path -->
     </div>
 
+    <!-- Include MediaPipe FaceMesh -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+
     <script>
-        // Access HTML elements
         const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
         const overlay = document.getElementById('overlay');
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
 
         // Start video stream from user's camera
         async function startCamera() {
@@ -64,21 +73,56 @@
             }
         }
 
-        // Adjust overlay position on screen resize for better alignment
-        function adjustOverlayPosition() {
-            const screenHeight = window.innerHeight;
+        // Initialize MediaPipe FaceMesh
+        const faceMesh = new FaceMesh({
+            locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`,
+        });
+        faceMesh.setOptions({
+            maxNumFaces: 1,
+            minDetectionConfidence: 0.5,
+            minTrackingConfidence: 0.5,
+        });
 
-            // Position the overlay slightly above the center of the screen
-            overlay.style.top = `${screenHeight * 0.25}px`; // 25% down from the top
+        // Event for face detection
+        faceMesh.onResults(onResults);
+
+        // Capture video frame for face tracking
+        const camera = new Camera(video, {
+            onFrame: async () => {
+                await faceMesh.send({ image: video });
+            },
+            width: 1280,
+            height: 720
+        });
+        camera.start();
+
+        // Function to handle face mesh results
+        function onResults(results) {
+            // Clear canvas for drawing
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
+                const landmarks = results.multiFaceLandmarks[0];
+
+                // Use landmark at the forehead for halo position (e.g., landmark #10)
+                const forehead = landmarks[10];
+                const x = forehead.x * canvas.width;
+                const y = forehead.y * canvas.height - 80; // Offset halo above the head
+
+                // Position the halo overlay image
+                overlay.style.left = `${x}px`;
+                overlay.style.top = `${y}px`;
+
+                // (Optional) Draw face mesh on canvas for visualization
+                drawConnectors(ctx, landmarks, FaceMesh.FACEMESH_TESSELATION,
+                    { color: '#C0C0C070', lineWidth: 1 });
+                drawConnectors(ctx, landmarks, FaceMesh.FACEMESH_RIGHT_EYE, { color: '#FF3030' });
+                drawConnectors(ctx, landmarks, FaceMesh.FACEMESH_LEFT_EYE, { color: '#30FF30' });
+                drawConnectors(ctx, landmarks, FaceMesh.FACEMESH_LIPS, { color: '#E0E0E0' });
+            }
         }
 
-        // Run functions on load and resize
-        window.onload = () => {
-            startCamera();
-            adjustOverlayPosition();
-        };
-        window.onresize = adjustOverlayPosition;
+        startCamera();
     </script>
 </body>
 </html>
-
