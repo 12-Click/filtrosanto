@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AR Face Lens</title>
   <style>
-    /* Full screen and responsive setup */
+    /* Fullscreen setup and styling */
     body, html {
       margin: 0;
       padding: 0;
@@ -27,6 +27,7 @@
     #halo, #text {
       position: absolute;
       z-index: 2;
+      display: none; /* Initially hidden */
     }
     #halo {
       width: 150px;
@@ -42,8 +43,8 @@
 <video id="video" autoplay muted playsinline></video>
 
 <!-- GIF elements -->
-<img id="halo" src="images/halo.gif" alt="Halo GIF">
-<img id="text" src="images/text.gif" alt="Text GIF">
+<img id="halo" src="path-to-halo.gif" alt="Halo GIF">
+<img id="text" src="path-to-text.gif" alt="Text GIF">
 
 <!-- JavaScript for face tracking -->
 <script src="https://cdn.jsdelivr.net/npm/clmtrackr@1.1.2/build/clmtrackr.min.js"></script>
@@ -63,7 +64,7 @@
     }
   }
 
-  // Initialize clmtrackr
+  // Initialize clmtrackr and start tracking
   function startTracking() {
     tracker = new clm.tracker();
     tracker.init();
@@ -78,17 +79,25 @@
     const positions = tracker.getCurrentPosition();
 
     if (positions) {
-      // Position halo slightly above the head (forehead point)
+      // Show the GIFs if face is detected
+      halo.style.display = "block";
+      text.style.display = "block";
+
+      // Position halo slightly above the head (forehead point, index 33)
       const foreheadX = positions[33][0];
       const foreheadY = positions[33][1];
       halo.style.left = `${foreheadX - halo.width / 2}px`;
       halo.style.top = `${foreheadY - halo.height - 20}px`;
 
-      // Position text under the chin (chin point)
+      // Position text under the chin (chin point, index 7)
       const chinX = positions[7][0];
       const chinY = positions[7][1];
       text.style.left = `${chinX - text.width / 2}px`;
       text.style.top = `${chinY + 10}px`;
+    } else {
+      // Hide the GIFs if no face is detected
+      halo.style.display = "none";
+      text.style.display = "none";
     }
 
     requestAnimationFrame(updatePositions);
