@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Face Lens</title>
+    <title>Jovenes Misioneros!</title>
     <style>
         body {
             margin: 0;
@@ -25,18 +25,17 @@
         .overlay {
             position: absolute;
             pointer-events: none; /* Prevent interaction with overlays */
+            display: none; /* Initially hide overlays */
         }
 
         #halo {
             width: 50%; /* Adjust size as needed */
-            top: 10%; /* Default position above the head */
             left: 50%;
             transform: translate(-50%, 0);
         }
 
         #text {
             width: 50%; /* Adjust size as needed */
-            bottom: 20%; /* Position under the chin */
             left: 50%;
             transform: translate(-50%, 0);
         }
@@ -79,10 +78,14 @@
             if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
                 const landmarks = results.multiFaceLandmarks[0];
 
+                // Show the GIF overlays after detecting the face
+                halo.style.display = 'block';
+                text.style.display = 'block';
+
                 // Get the position for the halo (use a landmark higher up, e.g., forehead)
-                const forehead = landmarks[10]; // This is the landmark index for the forehead
+                const forehead = landmarks[10]; // Forehead landmark
                 const haloX = forehead.x * video.clientWidth;
-                const haloY = forehead.y * video.clientHeight - 70; // Adjust to position above the head
+                const haloY = forehead.y * video.clientHeight - 90; // Adjust higher above the head
 
                 halo.style.left = `${haloX}px`;
                 halo.style.top = `${haloY}px`;
