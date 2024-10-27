@@ -24,14 +24,19 @@
             height: 100vh;
             width: 100%;
         }
-        video, canvas {
+        video, img {
             position: absolute;
             width: 100vw;
             height: 100vh;
             object-fit: cover;
         }
-        canvas {
-            pointer-events: none; /* Only for display, not for interaction */
+        img.overlay {
+            pointer-events: none;
+            width: 200px; /* Set the width of the GIF overlay */
+            position: absolute;
+            top: 20%; /* Adjust the vertical position */
+            left: 50%; /* Center horizontally */
+            transform: translateX(-50%); /* Centering adjustment */
         }
     </style>
 </head>
@@ -40,19 +45,13 @@
         <!-- Camera Feed -->
         <video id="video" autoplay playsinline></video>
 
-        <!-- Canvas for Overlay -->
-        <canvas id="overlay"></canvas>
+        <!-- GIF Overlay as an Image -->
+        <img src="images/halo.gif" alt="Halo Overlay" class="overlay"> <!-- Replace with your GIF path -->
     </div>
 
     <script>
         // Access HTML elements
         const video = document.getElementById('video');
-        const overlayCanvas = document.getElementById('overlay');
-        const overlayContext = overlayCanvas.getContext('2d');
-
-        // Adjust canvas size to match video feed
-        overlayCanvas.width = window.innerWidth;
-        overlayCanvas.height = window.innerHeight;
 
         // Start video stream from user's camera
         async function startCamera() {
@@ -64,29 +63,9 @@
             }
         }
 
-        // Load animated GIF overlay
-        const gifImage = new Image();
-        gifImage.src = 'images/halo.gif';  // Replace with the path to your GIF file
-
-        // Render overlay onto the canvas
-        function drawOverlay() {
-            overlayContext.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
-
-            // Placeholder positions for halo, adjust based on face detection if added
-            const haloX = overlayCanvas.width / 2 - 100;  // Adjust position
-            const haloY = overlayCanvas.height / 2 - 200; // Adjust position
-            const haloWidth = 200;
-            const haloHeight = 150;
-
-            overlayContext.drawImage(gifImage, haloX, haloY, haloWidth, haloHeight);
-            requestAnimationFrame(drawOverlay);
-        }
-
-        // Initiate functions
-        gifImage.onload = () => {
-            startCamera();
-            drawOverlay();
-        };
+        // Start the camera when the page loads
+        startCamera();
     </script>
 </body>
 </html>
+
