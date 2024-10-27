@@ -3,113 +3,98 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>San Francisco Javier</title>
+    <title>Halo and Wings Face Lens</title>
     <style>
-        body, html {
+        * {
             margin: 0;
             padding: 0;
-            overflow: hidden;
-            height: 100%;
-            background-color: black; /* Improved visibility */
+            box-sizing: border-box;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #000;
         }
 
         .container {
             position: relative;
-            height: 100%;
-            width: 100%;
         }
 
-        #video {
+        video {
+            display: none; /* Hide video element */
+        }
+
+        canvas {
             position: absolute;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        #canvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-        }
-
-        .overlay {
-            position: absolute;
-            width: 200px; /* Size of the halo */
-            height: 200px; /* Size of the halo */
-            background: url('images/angel.png') no-repeat center center; /* Replace with your halo image URL */
-            background-size: cover; /* Ensure the image fits well */
-            pointer-events: none; /* Allows clicking through the overlay */
-            transform: translate(-50%, -50%); /* Center the overlay */
         }
     </style>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/tensorflow/3.9.0/tensorflow.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/face-landmarks-detection"></script>
 </head>
 <body>
     <div class="container">
         <video id="video" autoplay playsinline></video>
         <canvas id="canvas"></canvas>
-        <div class="overlay" id="halo"></div>
     </div>
     <script>
         const video = document.getElementById('video');
         const canvas = document.getElementById('canvas');
-        const halo = document.getElementById('halo');
         const ctx = canvas.getContext('2d');
 
-        // Set up the video stream
-        async function setupCamera() {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        navigator.mediaDevices.getUserMedia({
+            video: true
+        }).then((stream) => {
             video.srcObject = stream;
+            video.play();
+        }).catch((error) => {
+            console.error("Error accessing webcam: ", error);
+        });
 
-            return new Promise((resolve) => {
-                video.onloadedmetadata = () => {
-                    resolve(video);
-                };
-            });
-        }
-
-        async function loadFaceMesh() {
-            const model = await faceLandmarksDetection.load(faceLandmarksDetection.SupportedPackages.mediapipeFacemesh);
-            return model;
-        }
-
-        async function detectFaces(model) {
-            while (true) {
-                const predictions = await model.estimateFaces({ input: video });
-
-                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-                if (predictions.length > 0) {
-                    const face = predictions[0];
-                    const x = (face.boundingBox.topLeft[0] + face.boundingBox.bottomRight[0]) / 2;
-                    const y = (face.boundingBox.topLeft[1] + face.boundingBox.bottomRight[1]) / 2;
-
-                    // Position the halo slightly above the detected face
-                    halo.style.left = `${x}px`;
-                    halo.style.top = `${y - 100}px`; // Adjust to position higher above the face
-                } else {
-                    halo.style.left = `50%`; // Reset position if no face detected
-                    halo.style.top = `50%`; // Reset position if no face detected
-                }
-
-                await new Promise(requestAnimationFrame); // Use requestAnimationFrame for smoothness
-            }
-        }
-
-        async function main() {
-            await setupCamera();
+        video.addEventListener('loadedmetadata', () => {
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
-            const model = await loadFaceMesh();
-            detectFaces(model);
+        });
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            // Draw halo
+            drawHalo(canvas.width / 2, canvas.height / 4, 50, 20);
+
+            // Draw wings
+            drawWings(canvas.width / 2, canvas.height / 2, 70, 50);
+
+            requestAnimationFrame(draw);
         }
 
-        main();
+        function drawHalo(x, y, radius, glow) {
+            ctx.beginPath();
+            ctx.arc(x, y, radius, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(255, 255, 0, 0.5)'; // Halo color
+            ctx.fill();
+            ctx.shadowColor = 'yellow';
+            ctx.shadowBlur = glow;
+            ctx.fill();
+            ctx.shadowBlur = 0; // Reset shadow
+        }
+
+        function drawWings(x, y, width, height) {
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)'; // Wing color
+            ctx.beginPath();
+            ctx.moveTo(x - width, y);
+            ctx.bezierCurveTo(x - width * 2, y - height, x - width * 2, y + height, x - width, y);
+            ctx.bezierCurveTo(x, y + height, x + width * 2, y + height, x + width, y);
+            ctx.bezierCurveTo(x + width * 2, y - height, x + width * 2, y + height, x + width, y);
+            ctx.closePath();
+            ctx.fill();
+        }
+
+        video.addEventListener('play', draw);
     </script>
 </body>
 </html>
+
