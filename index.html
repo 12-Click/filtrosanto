@@ -43,12 +43,6 @@
             cursor: pointer;
             z-index: 2; /* Ensure icon is above the canvas */
         }
-
-        img {
-            margin-top: 20px;
-            max-width: 90%;
-            border: 2px solid #fff;
-        }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://unpkg.com/@tensorflow/tfjs"></script>
@@ -58,33 +52,10 @@
     <video id="video" autoplay playsinline></video>
     <canvas id="canvas"></canvas>
     <img id="cameraIcon" class="icon" src="https://your-image-url.com/camera-icon.png" alt="Capture" /> <!-- Replace with your camera icon URL -->
-    <img id="capturedPhoto" alt="Captured Photo" />
     <script>
         const video = document.getElementById('video');
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
-        const capturedPhoto = document.getElementById('capturedPhoto');
-        const cameraIcon = document.getElementById('cameraIcon');
-
-        let haloImage = new Image();
-        let wingsImage = new Image();
-
-        // Load images
-        haloImage.src = 'images/angel.png'; // Replace with your halo image URL
-        wingsImage.src = 'images/angel.png'; // Replace with your wings image URL
-
-        // Wait until images are loaded
-        const loadImages = () => {
-            return new Promise((resolve) => {
-                let loadedCount = 0;
-                const onLoad = () => {
-                    loadedCount++;
-                    if (loadedCount === 2) resolve(); // Both images loaded
-                };
-                haloImage.onload = onLoad;
-                wingsImage.onload = onLoad;
-            });
-        };
 
         async function setupCamera() {
             try {
@@ -109,7 +80,6 @@
         }
 
         async function main() {
-            await loadImages(); // Ensure images are loaded
             await setupCamera();
             const model = await loadFaceLandmarksModel();
             canvas.width = video.videoWidth;
@@ -120,6 +90,8 @@
                 ctx.drawImage(video, 0, 0, canvas.width, canvas.height); // Draw video frame
 
                 const predictions = await model.estimateFaces({ input: video });
+                
+                console.log(predictions); // Log predictions to check if faces are detected
 
                 if (predictions.length > 0) {
                     predictions.forEach((prediction) => {
@@ -128,11 +100,9 @@
                         const x = keypoints[30][0]; // Nose tip
                         const y = keypoints[30][1] - 100; // Position above the head for the halo
 
-                        // Draw halo
-                        ctx.drawImage(haloImage, x - haloImage.width / 2, y - haloImage.height / 2);
-
-                        // Draw wings
-                        ctx.drawImage(wingsImage, x - wingsImage.width / 2, y - wingsImage.height / 2);
+                        // Here you can replace with your drawing logic for halo and wings images
+                        ctx.fillStyle = 'red'; // Temporary for testing
+                        ctx.fillRect(x - 10, y - 10, 20, 20); // Draw a red square where the face is detected
                     });
                 }
 
@@ -141,19 +111,6 @@
 
             detectFace();
         }
-
-        // Capture photo functionality
-        cameraIcon.addEventListener('click', () => {
-            const photo = canvas.toDataURL('image/png'); // Capture the canvas as a PNG
-            const link = document.createElement('a');
-            link.href = photo;
-            link.download = 'captured_photo.png'; // Set the filename for the downloaded image
-            document.body.appendChild(link);
-            link.click(); // Trigger the download
-            document.body.removeChild(link); // Clean up the link element
-
-            capturedPhoto.src = photo; // Set the src of the img element to the captured photo
-        });
 
         main();
     </script>
