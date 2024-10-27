@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Face Tracking Halo with Snapshot</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+    <title>Vamos hacer Santos!</title>
     <style>
         * {
             margin: 0;
@@ -21,13 +21,16 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            height: 100%;
             width: 100%;
+            overflow: hidden;
         }
         video, canvas {
             position: absolute;
-            width: 100vw;
-            height: 100vh;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             object-fit: cover;
         }
         img.overlay {
@@ -38,7 +41,7 @@
             transform: translate(-50%, -100%);
         }
         #snapshot-btn {
-            position: absolute;
+            position: fixed;
             bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
@@ -49,7 +52,9 @@
             border: none;
             border-radius: 5px;
             cursor: pointer;
-            z-index: 1000; /* Ensure button is above other elements */
+            z-index: 1000;
+            display: block;
+            visibility: visible;
         }
     </style>
 </head>
@@ -147,7 +152,7 @@
             try {
                 link.click();
             } catch (error) {
-                window.open(snapshotURL); // Open image in a new tab for manual save
+                window.open(snapshotURL); 
             } finally {
                 document.body.removeChild(link);
             }
