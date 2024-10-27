@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Face Lens with TensorFlow.js</title>
+    <title>Face Lens with MediaPipe Face Mesh</title>
     <style>
         body {
             margin: 0;
@@ -40,14 +40,16 @@
         #halo {
             position: absolute;
             width: 50%;
-            top: 20%;
+            top: 20%; /* Adjust based on face position */
             transform: translateX(-50%);
+            pointer-events: none; /* Allow clicks to go through */
         }
 
         #text {
             position: absolute;
-            bottom: 20%;
+            bottom: 20%; /* Adjust based on face position */
             transform: translateX(-50%);
+            pointer-events: none; /* Allow clicks to go through */
         }
     </style>
 </head>
@@ -79,17 +81,34 @@
         }
 
         async function detectFace() {
+            // Load the MediaPipe Face Mesh model
             const model = await faceLandmarksDetection.load(
                 faceLandmarksDetection.SupportedPackages.mediapipeFacemesh
             );
+
             const detect = async () => {
+                // Estimate the faces in the video
                 const predictions = await model.estimateFaces({ input: video });
                 if (predictions.length > 0) {
                     const { boundingBox } = predictions[0];
-                    halo.style.left = `${boundingBox.topLeft[0] + boundingBox.bottomRight[0] / 2}px`;
-                    halo.style.top = `${boundingBox.topLeft[1]}px`;
-                    text.style.left = `${boundingBox.topLeft[0] + boundingBox.bottomRight[0] / 2}px`;
-                    text.style.top = `${boundingBox.bottomRight[1]}px`;
+
+                    // Calculate the center position for halo and text
+                    const centerX = (boundingBox.topLeft[0] + boundingBox.bottomRight[0]) / 2;
+                    const topY = boundingBox.topLeft[1];
+                    const bottomY = boundingBox.bottomRight[1];
+
+                    // Position halo and text based on bounding box
+                    halo.style.left = `${centerX}px`;
+                    halo.style.top = `${topY}px`;
+                    text.style.left = `${centerX}px`;
+                    text.style.top = `${bottomY + 10}px`; // Positioning below the face
+
+                    // Set opacity for visibility
+                    halo.style.opacity = 1;
+                    text.style.opacity = 1;
+                } else {
+                    halo.style.opacity = 0; // Hide when no face is detected
+                    text.style.opacity = 0; // Hide when no face is detected
                 }
                 requestAnimationFrame(detect);
             };
