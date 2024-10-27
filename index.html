@@ -20,6 +20,7 @@
             height: 100vh;
             object-fit: cover;
             transform: scaleX(-1); /* Mirror the video for a selfie effect */
+            display: block; /* Prevents loading icon display */
         }
 
         .overlay {
@@ -43,7 +44,7 @@
 </head>
 <body>
     <div class="container">
-        <video id="video" playsinline autoplay></video>
+        <video id="video" playsinline autoplay muted></video> <!-- Added muted attribute -->
         <img id="halo" class="overlay" src="images/halo.gif" alt="Halo">
         <img id="text" class="overlay" src="images/text.gif" alt="Text"> <!-- Change to your GIF -->
     </div>
@@ -85,7 +86,7 @@
                 // Get the position for the halo (above the forehead)
                 const forehead = landmarks[10]; // Forehead landmark
                 const haloX = (1 - forehead.x) * video.clientWidth; // Adjust for mirrored effect
-                const haloY = forehead.y * video.clientHeight - 90; // Adjust higher above the head
+                const haloY = forehead.y * video.clientHeight - 120; // Adjust higher above the head
 
                 halo.style.left = `${haloX}px`;
                 halo.style.top = `${haloY}px`;
