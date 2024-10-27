@@ -50,10 +50,11 @@
         const overlay = document.getElementById('overlay');
         const ctx = overlay.getContext('2d');
 
-        // Load face-api.js models
+        // Load face-api.js models from URLs
         async function loadModels() {
-            await faceapi.nets.tinyFaceDetector.loadFromUri('/models');
-            await faceapi.nets.faceLandmark68TinyNet.loadFromUri('/models');
+            const modelUrl = 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js/models';
+            await faceapi.nets.tinyFaceDetector.loadFromUri(modelUrl);
+            await faceapi.nets.faceLandmark68TinyNet.loadFromUri(modelUrl);
         }
 
         // Start video stream
@@ -86,14 +87,14 @@
 
                 // Draw halo GIF above head
                 const haloImg = new Image();
-                haloImg.src = 'images/halo.gif';
+                haloImg.src = 'images/halo.gif'; // Replace with your halo GIF URL
                 haloImg.onload = () => {
                     ctx.drawImage(haloImg, haloX, haloY, 150, 50);
                 };
 
                 // Draw chin GIF under the chin
                 const chinGif = new Image();
-                chinGif.src = 'images/text.gif';
+                chinGif.src = 'images/text.gif'; // Replace with your chin GIF URL
                 chinGif.onload = () => {
                     ctx.drawImage(chinGif, chinX, chinY, 80, 50);
                 };
