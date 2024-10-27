@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
-    <title>Face Tracking Halo with Snapshot</title>
+    <title>Face Tracking Halo with GIFs</title>
     <style>
         * {
             margin: 0;
@@ -33,19 +33,9 @@
             height: 100%;
             object-fit: cover;
         }
-        #snapshot-btn {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            padding: 10px 20px;
-            background-color: #007bff;
-            color: white;
-            font-size: 16px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            z-index: 1000;
+        #halo-gif, #chin-gif {
+            position: absolute;
+            pointer-events: none; /* Prevent interaction with GIFs */
         }
     </style>
 </head>
@@ -53,7 +43,8 @@
     <div class="camera-container">
         <video id="video" autoplay playsinline></video>
         <canvas id="canvas"></canvas>
-        <button id="snapshot-btn">Take Snapshot</button>
+        <img id="halo-gif" src="images/halo.gif" style="display: none;"> <!-- Replace with your actual path to the halo GIF -->
+        <img id="chin-gif" src="images/text.gif" style="display: none;"> <!-- Replace with your actual path to the chin text GIF -->
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script>
@@ -62,23 +53,15 @@
     <script>
         const video = document.getElementById('video');
         const canvas = document.getElementById('canvas');
-        const snapshotBtn = document.getElementById('snapshot-btn');
         const ctx = canvas.getContext('2d');
 
         let currentLandmarks = null;
 
-        // Load PNGs as Image objects
-        const haloImage = new Image();
-        haloImage.src = 'images/flame.png'; // Replace with your actual path to the halo PNG
-
-        const chinImage = new Image();
-        chinImage.src = 'images/banner.png'; // Replace with your actual path to the chin text PNG
-
-        // Set desired dimensions for the PNGs
-        const haloWidth = 120; // Adjust width for the halo image
-        const haloHeight = 60; // Adjust height for the halo image
-        const chinWidth = 100;  // Adjust width for the chin text image
-        const chinHeight = 50; // Adjust height for the chin text image
+        // Set desired dimensions for the GIFs
+        const haloWidth = 120; // Adjust width for the halo GIF
+        const haloHeight = 60; // Adjust height for the halo GIF
+        const chinWidth = 100;  // Adjust width for the chin text GIF
+        const chinHeight = 50; // Adjust height for the chin text GIF
 
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
@@ -127,59 +110,24 @@
                 const xChin = chin.x * canvas.width;
                 const yChin = chin.y * canvas.height + 40; // Offset below chin
 
-                // Draw PNGs on the live feed canvas
-                if (haloImage.complete) {
-                    ctx.drawImage(haloImage, xHalo - haloWidth / 2, yHalo - haloHeight, haloWidth, haloHeight);
-                }
-                if (chinImage.complete) {
-                    ctx.drawImage(chinImage, xChin - chinWidth / 2, yChin, chinWidth, chinHeight);
-                }
+                // Draw GIFs on the live feed canvas
+                const haloGif = document.getElementById('halo-gif');
+                const chinGif = document.getElementById('chin-gif');
+
+                haloGif.style.display = 'block'; // Show the GIF
+                chinGif.style.display = 'block'; // Show the GIF
+
+                // Position the GIFs
+                haloGif.style.left = `${xHalo - haloWidth / 2}px`;
+                haloGif.style.top = `${yHalo - haloHeight}px`;
+
+                chinGif.style.left = `${xChin - chinWidth / 2}px`;
+                chinGif.style.top = `${yChin}px`;
             }
 
-            // Call requestAnimationFrame to keep the PNGs moving
+            // Call requestAnimationFrame to keep the GIFs moving
             requestAnimationFrame(() => onResults(results));
         }
-
-        snapshotBtn.addEventListener('click', () => {
-            if (!currentLandmarks) return; // Don't take snapshot if no face detected
-
-            const snapshotCanvas = document.createElement('canvas');
-            snapshotCanvas.width = canvas.width;
-            snapshotCanvas.height = canvas.height;
-            const snapshotCtx = snapshotCanvas.getContext('2d');
-
-            snapshotCtx.drawImage(video, 0, 0, snapshotCanvas.width, snapshotCanvas.height);
-
-            // Draw PNGs on the snapshot canvas
-            const forehead = currentLandmarks[10];
-            const xHalo = forehead.x * snapshotCanvas.width;
-            const yHalo = forehead.y * snapshotCanvas.height - 80; // Offset for halo
-            if (haloImage.complete) {
-                snapshotCtx.drawImage(haloImage, xHalo - haloWidth / 2, yHalo - haloHeight, haloWidth, haloHeight);
-            }
-
-            const chin = currentLandmarks[152];
-            const xChin = chin.x * snapshotCanvas.width;
-            const yChin = chin.y * snapshotCanvas.height + 40; // Offset for chin text
-            if (chinImage.complete) {
-                snapshotCtx.drawImage(chinImage, xChin - chinWidth / 2, yChin, chinWidth, chinHeight);
-            }
-
-            // Save the snapshot
-            const snapshotURL = snapshotCanvas.toDataURL('image/png');
-            const link = document.createElement('a');
-            link.href = snapshotURL;
-            link.download = 'snapshot.png';
-            document.body.appendChild(link);
-
-            try {
-                link.click();
-            } catch (error) {
-                window.open(snapshotURL); 
-            } finally {
-                document.body.removeChild(link);
-            }
-        });
 
         startCamera();
     </script>
