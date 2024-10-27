@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Halo and Wings Face Lens</title>
+    <title>Face Lens</title>
     <style>
         * {
             margin: 0;
@@ -32,12 +32,34 @@
             top: 0;
             left: 0;
         }
+
+        /* Add styling for the halo and wings images */
+        .halo, .wings {
+            position: absolute;
+            pointer-events: none; /* Prevent mouse events from interfering */
+        }
+
+        .halo {
+            width: 100px; /* Set desired width */
+            top: 20%; /* Position for the halo */
+            left: 50%;
+            transform: translateX(-50%); /* Center horizontally */
+        }
+
+        .wings {
+            width: 150px; /* Set desired width */
+            top: 50%; /* Position for the wings */
+            left: 50%;
+            transform: translate(-50%, -50%); /* Center both horizontally and vertically */
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <video id="video" autoplay playsinline></video>
         <canvas id="canvas"></canvas>
+        <img src="images/angel.png" class="halo" alt="Halo" />
+        <img src="images/angel.png" class="wings" alt="Wings" />
     </div>
     <script>
         const video = document.getElementById('video');
@@ -61,40 +83,10 @@
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            
-            // Draw halo
-            drawHalo(canvas.width / 2, canvas.height / 4, 50, 20);
-
-            // Draw wings
-            drawWings(canvas.width / 2, canvas.height / 2, 70, 50);
-
             requestAnimationFrame(draw);
-        }
-
-        function drawHalo(x, y, radius, glow) {
-            ctx.beginPath();
-            ctx.arc(x, y, radius, 0, Math.PI * 2);
-            ctx.fillStyle = 'rgba(255, 255, 0, 0.5)'; // Halo color
-            ctx.fill();
-            ctx.shadowColor = 'yellow';
-            ctx.shadowBlur = glow;
-            ctx.fill();
-            ctx.shadowBlur = 0; // Reset shadow
-        }
-
-        function drawWings(x, y, width, height) {
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)'; // Wing color
-            ctx.beginPath();
-            ctx.moveTo(x - width, y);
-            ctx.bezierCurveTo(x - width * 2, y - height, x - width * 2, y + height, x - width, y);
-            ctx.bezierCurveTo(x, y + height, x + width * 2, y + height, x + width, y);
-            ctx.bezierCurveTo(x + width * 2, y - height, x + width * 2, y + height, x + width, y);
-            ctx.closePath();
-            ctx.fill();
         }
 
         video.addEventListener('play', draw);
     </script>
 </body>
 </html>
-
