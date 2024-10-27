@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
-    <title>Face Tracking Halo with Snapshot</title>
+    <title>Jovenes Misioneros!</title>
     <style>
         * {
             margin: 0;
@@ -33,18 +33,6 @@
             height: 100%;
             object-fit: cover;
         }
-        img.overlay, img.chin-overlay {
-            display: none;
-            pointer-events: none;
-            position: absolute;
-            transform: translate(-50%, -100%);
-        }
-        img.overlay {
-            width: 150px; /* Halo GIF size */
-        }
-        img.chin-overlay {
-            width: 100px; /* Chin text GIF size */
-        }
         #snapshot-btn {
             position: fixed;
             bottom: 20px;
@@ -58,8 +46,6 @@
             border-radius: 5px;
             cursor: pointer;
             z-index: 1000;
-            display: block;
-            visibility: visible;
         }
     </style>
 </head>
@@ -67,13 +53,6 @@
     <div class="camera-container">
         <video id="video" autoplay playsinline></video>
         <canvas id="canvas"></canvas>
-        
-        <!-- Halo Overlay (above head) -->
-        <img src="images/halo.gif" alt="Halo Overlay" class="overlay" id="overlay">
-        
-        <!-- Chin Overlay (below chin) -->
-        <img src="images/text.gif" alt="Chin Text Overlay" class="chin-overlay" id="chinOverlay">
-
         <button id="snapshot-btn">Take Snapshot</button>
     </div>
 
@@ -83,12 +62,17 @@
     <script>
         const video = document.getElementById('video');
         const canvas = document.getElementById('canvas');
-        const overlay = document.getElementById('overlay');
-        const chinOverlay = document.getElementById('chinOverlay');
         const snapshotBtn = document.getElementById('snapshot-btn');
         const ctx = canvas.getContext('2d');
 
         let currentLandmarks = null;
+
+        // Load GIFs as Image objects
+        const haloImage = new Image();
+        haloImage.src = 'images/halo.gif'; // Replace with your actual path to the halo GIF
+
+        const chinImage = new Image();
+        chinImage.src = 'images/text.gif'; // Replace with your actual path to the chin text GIF
 
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
@@ -128,32 +112,22 @@
             if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
                 currentLandmarks = results.multiFaceLandmarks[0];
 
-                // Position the halo above the head (using landmark #10)
+                // Calculate positions for halo and chin text based on landmarks
                 const forehead = currentLandmarks[10];
-                const xForehead = forehead.x * canvas.width;
-                const yForehead = forehead.y * canvas.height - 80;
-                overlay.style.left = `${xForehead}px`;
-                overlay.style.top = `${yForehead}px`;
-                overlay.style.display = 'block';
+                const xHalo = forehead.x * canvas.width;
+                const yHalo = forehead.y * canvas.height - 80; // Offset above forehead
 
-                // Position the text below the chin (using landmark #152)
                 const chin = currentLandmarks[152];
                 const xChin = chin.x * canvas.width;
-                const yChin = chin.y * canvas.height + 20; // Offset below the chin
-                chinOverlay.style.left = `${xChin}px`;
-                chinOverlay.style.top = `${yChin}px`;
-                chinOverlay.style.display = 'block';
+                const yChin = chin.y * canvas.height + 40; // Offset below chin
 
-                // Draw face mesh (optional)
-                drawConnectors(ctx, currentLandmarks, FaceMesh.FACEMESH_TESSELATION, { color: '#C0C0C070', lineWidth: 1 });
-                drawConnectors(ctx, currentLandmarks, FaceMesh.FACEMESH_RIGHT_EYE, { color: '#FF3030' });
-                drawConnectors(ctx, currentLandmarks, FaceMesh.FACEMESH_LEFT_EYE, { color: '#30FF30' });
-                drawConnectors(ctx, currentLandmarks, FaceMesh.FACEMESH_LIPS, { color: '#E0E0E0' });
-            } else {
-                // Hide overlays if no face is detected
-                overlay.style.display = 'none';
-                chinOverlay.style.display = 'none';
-                currentLandmarks = null;
+                // Draw GIFs on the live feed canvas
+                if (haloImage.complete) {
+                    ctx.drawImage(haloImage, xHalo - haloImage.width / 2, yHalo - haloImage.height);
+                }
+                if (chinImage.complete) {
+                    ctx.drawImage(chinImage, xChin - chinImage.width / 2, yChin);
+                }
             }
         }
 
@@ -167,20 +141,23 @@
 
             snapshotCtx.drawImage(video, 0, 0, snapshotCanvas.width, snapshotCanvas.height);
 
-            // Calculate halo position based on forehead landmark
+            // Draw GIFs on the snapshot canvas
             const forehead = currentLandmarks[10];
             const xHalo = forehead.x * snapshotCanvas.width;
             const yHalo = forehead.y * snapshotCanvas.height - 80; // Offset for halo
-            snapshotCtx.drawImage(overlay, xHalo - overlay.naturalWidth / 2, yHalo - overlay.naturalHeight);
+            if (haloImage.complete) {
+                snapshotCtx.drawImage(haloImage, xHalo - haloImage.width / 2, yHalo - haloImage.height);
+            }
 
-            // Calculate chin text position based on chin landmark
             const chin = currentLandmarks[152];
             const xChin = chin.x * snapshotCanvas.width;
-            const yChin = chin.y * snapshotCanvas.height + 20; // Offset for text below chin
-            snapshotCtx.drawImage(chinOverlay, xChin - chinOverlay.naturalWidth / 2, yChin);
+            const yChin = chin.y * snapshotCanvas.height + 40; // Offset for chin text
+            if (chinImage.complete) {
+                snapshotCtx.drawImage(chinImage, xChin - chinImage.width / 2, yChin);
+            }
 
+            // Save the snapshot
             const snapshotURL = snapshotCanvas.toDataURL('image/png');
-
             const link = document.createElement('a');
             link.href = snapshotURL;
             link.download = 'snapshot.png';
@@ -199,5 +176,4 @@
     </script>
 </body>
 </html>
-
 
