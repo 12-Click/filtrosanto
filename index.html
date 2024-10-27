@@ -31,11 +31,11 @@
             object-fit: cover;
         }
         img.overlay {
-            display: none; /* Hide initially */
+            display: none;
             pointer-events: none;
-            width: 150px; /* Adjust size of GIF overlay */
+            width: 150px;
             position: absolute;
-            transform: translate(-50%, -100%); /* Center horizontally, position above face */
+            transform: translate(-50%, -100%);
         }
         #snapshot-btn {
             position: absolute;
@@ -49,26 +49,18 @@
             border: none;
             border-radius: 5px;
             cursor: pointer;
-            z-index: 10;
+            z-index: 1000; /* Ensure button is above other elements */
         }
     </style>
 </head>
 <body>
     <div class="camera-container">
-        <!-- Camera Feed -->
         <video id="video" autoplay playsinline></video>
-
-        <!-- Canvas for FaceMesh drawing (optional) -->
         <canvas id="canvas"></canvas>
-
-        <!-- GIF Overlay as an Image -->
-        <img src="images/halo.gif" alt="Halo Overlay" class="overlay" id="overlay"> <!-- Replace with your GIF path -->
-
-        <!-- Snapshot Button -->
+        <img src="images/halo.gif" alt="Halo Overlay" class="overlay" id="overlay">
         <button id="snapshot-btn">Take Snapshot</button>
     </div>
 
-    <!-- Include MediaPipe FaceMesh -->
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
 
@@ -82,7 +74,6 @@
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
 
-        // Start video stream from user's camera
         async function startCamera() {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ video: true });
@@ -92,7 +83,6 @@
             }
         }
 
-        // Initialize MediaPipe FaceMesh
         const faceMesh = new FaceMesh({
             locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`,
         });
@@ -102,10 +92,8 @@
             minTrackingConfidence: 0.5,
         });
 
-        // Event for face detection
         faceMesh.onResults(onResults);
 
-        // Capture video frame for face tracking
         const camera = new Camera(video, {
             onFrame: async () => {
                 await faceMesh.send({ image: video });
@@ -115,59 +103,54 @@
         });
         camera.start();
 
-        // Function to handle face mesh results
         function onResults(results) {
-            // Clear canvas for drawing
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
                 const landmarks = results.multiFaceLandmarks[0];
-
-                // Use landmark at the forehead for halo position (e.g., landmark #10)
                 const forehead = landmarks[10];
                 const x = forehead.x * canvas.width;
-                const y = forehead.y * canvas.height - 80; // Offset halo above the head
+                const y = forehead.y * canvas.height - 80;
 
-                // Position the halo overlay image based on forehead landmark
                 overlay.style.left = `${x}px`;
                 overlay.style.top = `${y}px`;
-
-                // Show the halo only if a face is detected
                 overlay.style.display = 'block';
 
-                // (Optional) Draw face mesh on canvas for visualization
-                drawConnectors(ctx, landmarks, FaceMesh.FACEMESH_TESSELATION,
-                    { color: '#C0C0C070', lineWidth: 1 });
+                drawConnectors(ctx, landmarks, FaceMesh.FACEMESH_TESSELATION, { color: '#C0C0C070', lineWidth: 1 });
                 drawConnectors(ctx, landmarks, FaceMesh.FACEMESH_RIGHT_EYE, { color: '#FF3030' });
                 drawConnectors(ctx, landmarks, FaceMesh.FACEMESH_LEFT_EYE, { color: '#30FF30' });
                 drawConnectors(ctx, landmarks, FaceMesh.FACEMESH_LIPS, { color: '#E0E0E0' });
             } else {
-                // Hide the halo if no face is detected
                 overlay.style.display = 'none';
             }
         }
 
-        // Take snapshot and save to device
         snapshotBtn.addEventListener('click', () => {
-            // Create an offscreen canvas to combine the video and overlay
             const snapshotCanvas = document.createElement('canvas');
             snapshotCanvas.width = canvas.width;
             snapshotCanvas.height = canvas.height;
             const snapshotCtx = snapshotCanvas.getContext('2d');
 
-            // Draw the video frame
             snapshotCtx.drawImage(video, 0, 0, snapshotCanvas.width, snapshotCanvas.height);
 
-            // Draw the overlay image at the calculated position
             const haloX = parseFloat(overlay.style.left) || 0;
             const haloY = parseFloat(overlay.style.top) || 0;
             snapshotCtx.drawImage(overlay, haloX - overlay.width / 2, haloY - overlay.height);
 
-            // Create an image link for downloading
+            const snapshotURL = snapshotCanvas.toDataURL('image/png');
+
             const link = document.createElement('a');
-            link.href = snapshotCanvas.toDataURL('image/png');
+            link.href = snapshotURL;
             link.download = 'snapshot.png';
-            link.click();
+            document.body.appendChild(link);
+
+            try {
+                link.click();
+            } catch (error) {
+                window.open(snapshotURL); // Open image in a new tab for manual save
+            } finally {
+                document.body.removeChild(link);
+            }
         });
 
         startCamera();
