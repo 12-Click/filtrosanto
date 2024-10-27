@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Face Tracking Halo with Snapshot</title>
+    <title>San Francisco Javier</title>
     <style>
         * {
             margin: 0;
@@ -128,7 +128,7 @@
                 const x = forehead.x * canvas.width;
                 const y = forehead.y * canvas.height - 80; // Offset halo above the head
 
-                // Position the halo overlay image
+                // Position the halo overlay image based on forehead landmark
                 overlay.style.left = `${x}px`;
                 overlay.style.top = `${y}px`;
 
@@ -173,5 +173,7 @@
         startCamera();
     </script>
 </body>
+</html>
+
 </html>
 
