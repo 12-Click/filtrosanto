@@ -1,155 +1,140 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mobile Optimized Face Filter</title>
-  <style>
-    /* Container styling for responsiveness */
-    #container {
-      position: relative;
-      width: 100%;
-      max-width: 400px;
-      margin: 0 auto;
-    }
-    /* Video and Canvas styling for smaller devices */
-    #video, #overlay {
-      width: 100%;
-      height: auto;
-    }
-    /* Take Picture button with touch-friendly styling */
-    #take-picture {
-      display: block;
-      margin: 10px auto;
-      padding: 12px 24px;
-      font-size: 18px;
-      cursor: pointer;
-      border-radius: 8px;
-      background-color: #3498db;
-      color: white;
-      border: none;
-    }
-    /* Display captured image */
-    #captured-image {
-      display: block;
-      margin: 20px auto;
-      max-width: 100%;
-    }
-    /* Glow animation for the halo effect */
-    @keyframes glow {
-      0%, 100% {
-        stroke-width: 5px;
-        stroke: gold;
-      }
-      50% {
-        stroke-width: 8px;
-        stroke: yellow;
-      }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mobile Face Filter</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+            margin: 0;
+        }
+        #video {
+            width: 100%;
+            max-width: 400px;
+            border: 2px solid #3498db;
+        }
+        #overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none; /* Allow clicks to go through */
+        }
+        #take-picture {
+            margin-top: 20px;
+            padding: 12px 24px;
+            font-size: 18px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        #captured-image {
+            display: none;
+            margin-top: 20px;
+            max-width: 100%;
+        }
+    </style>
 </head>
 <body>
-  <div id="container">
-    <video id="video" autoplay muted></video>
-    <canvas id="overlay"></canvas>
-  </div>
-  <button id="take-picture">Take Picture</button>
-  <img id="captured-image" alt="Captured Image" style="display: none;">
 
-  <!-- Include FaceAPI.js from CDN -->
-  <script defer src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api@latest/dist/face-api.min.js"></script>
-  <script>
+<video id="video" autoplay muted></video>
+<canvas id="overlay"></canvas>
+<button id="take-picture">Take Picture</button>
+<img id="captured-image" alt="Captured Image">
+
+<script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api@latest/dist/face-api.min.js"></script>
+<script>
     const video = document.getElementById('video');
     const canvas = document.getElementById('overlay');
     const context = canvas.getContext('2d');
     const capturedImage = document.getElementById('captured-image');
     const takePictureButton = document.getElementById('take-picture');
 
-    // Load FaceAPI.js models from CDN
+    // Load the models
     async function loadModels() {
-      await faceapi.nets.tinyFaceDetector.loadFromUri('https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/');
-      await faceapi.nets.faceLandmark68Net.loadFromUri('https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/');
+        await faceapi.nets.tinyFaceDetector.loadFromUri('/models');
+        await faceapi.nets.faceLandmark68Net.loadFromUri('/models');
     }
 
-    // Initialize camera with low resolution for better performance
+    // Start video stream
     async function startVideo() {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: { width: 360, height: 480 }  // Lower resolution for mobile
-        });
-        video.srcObject = stream;
-      } catch (error) {
-        console.error("Error accessing camera:", error);
-        alert("Camera access is required to use this feature. Please enable camera access.");
-      }
-    }
-
-    // Draw halo effect
-    function drawHalo(x, y, radius) {
-      context.beginPath();
-      context.arc(x, y - radius * 1.5, radius * 1.3, 0, Math.PI * 2);
-      context.strokeStyle = 'gold';
-      context.lineWidth = 5;
-      context.stroke();
-      context.closePath();
-      
-      // Add glow animation
-      canvas.style.animation = 'glow 2s infinite';
-    }
-
-    // Detect face and apply filter
-    async function detectFace() {
-      const options = new faceapi.TinyFaceDetectorOptions({ inputSize: 128, scoreThreshold: 0.5 });  // Smaller input size for speed
-      const result = await faceapi.detectSingleFace(video, options).withFaceLandmarks();
-
-      if (result) {
-        const { width, height } = video.getBoundingClientRect();
-        canvas.width = width;
-        canvas.height = height;
-
-        context.clearRect(0, 0, canvas.width, canvas.height);
-
-        const resizedResult = faceapi.resizeResults(result, { width, height });
-        const landmarks = resizedResult.landmarks;
-        const nose = landmarks.getNose();
-
-        if (nose) {
-          const [noseX, noseY] = [nose[3].x, nose[3].y];
-          drawHalo(noseX, noseY, 40);  // Adjust halo size for mobile
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            video.srcObject = stream;
+        } catch (err) {
+            console.error("Error accessing camera:", err);
+            alert("Could not access camera. Please allow camera access.");
         }
-      }
-
-      requestAnimationFrame(detectFace);
     }
 
-    // Capture image with filter
+    // Detect faces
+    async function detectFaces() {
+        const options = new faceapi.TinyFaceDetectorOptions();
+        const result = await faceapi.detectSingleFace(video, options).withFaceLandmarks();
+
+        if (result) {
+            const { width, height } = video.getBoundingClientRect();
+            canvas.width = width;
+            canvas.height = height;
+            context.clearRect(0, 0, width, height);
+
+            const resizedResult = faceapi.resizeResults(result, { width, height });
+            const landmarks = resizedResult.landmarks;
+            const nose = landmarks.getNose();
+
+            if (nose) {
+                const noseX = nose[3].x;
+                const noseY = nose[3].y;
+                context.beginPath();
+                context.arc(noseX, noseY - 20, 30, 0, Math.PI * 2);
+                context.strokeStyle = 'gold';
+                context.lineWidth = 5;
+                context.stroke();
+                context.closePath();
+            }
+        }
+
+        requestAnimationFrame(detectFaces);
+    }
+
+    // Capture image
     function captureImage() {
-      const offscreenCanvas = document.createElement('canvas');
-      offscreenCanvas.width = video.videoWidth;
-      offscreenCanvas.height = video.videoHeight;
-      const offscreenContext = offscreenCanvas.getContext('2d');
+        const offscreenCanvas = document.createElement('canvas');
+        offscreenCanvas.width = video.videoWidth;
+        offscreenCanvas.height = video.videoHeight;
+        const offscreenContext = offscreenCanvas.getContext('2d');
 
-      offscreenContext.drawImage(video, 0, 0, offscreenCanvas.width, offscreenCanvas.height);
-      offscreenContext.drawImage(canvas, 0, 0, offscreenCanvas.width, offscreenCanvas.height);
-
-      const imageDataUrl = offscreenCanvas.toDataURL('image/png');
-      capturedImage.src = imageDataUrl;
-      capturedImage.style.display = 'block';
+        offscreenContext.drawImage(video, 0, 0);
+        offscreenContext.drawImage(canvas, 0, 0);
+        
+        const imageDataUrl = offscreenCanvas.toDataURL('image/png');
+        capturedImage.src = imageDataUrl;
+        capturedImage.style.display = 'block';
     }
 
-    // Event listener for take picture button
-    takePictureButton.addEventListener('click', async () => {
-      await startVideo(); // Ensure video starts when button is clicked
-      captureImage();
+    // Button event listener
+    takePictureButton.addEventListener('click', () => {
+        captureImage();
     });
 
-    // Initialize
+    // Initialize everything
     async function init() {
-      await loadModels();
-      video.addEventListener('play', detectFace);
+        await loadModels();
+        await startVideo();
+        video.addEventListener('play', detectFaces);
     }
 
     init();
-  </script>
+</script>
+
 </body>
 </html>
