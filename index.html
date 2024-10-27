@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Jovenes Misioneros!</title>
-     <!-- Favicon-->
+    <!-- Favicon-->
     <link rel="shortcut icon" href="images/logo2.png">
     <style>
         body {
@@ -42,15 +42,6 @@
             left: 50%;
             transform: translate(-50%, 0);
         }
-
-        #screenshotButton {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            padding: 10px 20px;
-            font-size: 16px;
-            z-index: 1; /* Ensure it’s on top of everything else */
-        }
     </style>
 </head>
 <body>
@@ -58,7 +49,6 @@
         <video id="video" playsinline autoplay muted></video> <!-- Added muted attribute -->
         <img id="halo" class="overlay" src="images/halo.gif" alt="Halo">
         <img id="text" class="overlay" src="images/text2.gif" alt="Text"> <!-- Change to your GIF -->
-        <button id="screenshotButton">Captura tu Selfie</button> <!-- Screenshot button -->
     </div>
     
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils"></script>
@@ -67,7 +57,6 @@
         const video = document.getElementById('video');
         const halo = document.getElementById('halo');
         const text = document.getElementById('text');
-        const screenshotButton = document.getElementById('screenshotButton');
 
         // Load the face mesh model
         const faceMesh = new FaceMesh({
@@ -113,50 +102,6 @@
                 text.style.top = `${textY}px`;
             }
         }
-
-        // Function to capture a screenshot
-        screenshotButton.addEventListener('click', () => {
-            const canvas = document.createElement('canvas');
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            const context = canvas.getContext('2d');
-
-            // Flip the context horizontally to match the live mirrored view
-            context.translate(canvas.width, 0);
-            context.scale(-1, 1);
-
-            // Draw the current video frame onto the canvas
-            context.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-            // Calculate scaling for overlay positions
-            const scaleX = canvas.width / video.clientWidth;
-            const scaleY = canvas.height / video.clientHeight;
-
-            // Draw the halo overlay in the correct position
-            if (halo.style.display === 'block') {
-                const haloX = parseFloat(halo.style.left) * scaleX - (halo.clientWidth * scaleX) / 2;
-                const haloY = parseFloat(halo.style.top) * scaleY;
-                context.drawImage(halo, haloX, haloY, halo.clientWidth * scaleX, halo.clientHeight * scaleY);
-            }
-            // Draw the text overlay in the correct position
-            if (text.style.display === 'block') {
-                const textX = parseFloat(text.style.left) * scaleX - (text.clientWidth * scaleX) / 2;
-                const textY = parseFloat(text.style.top) * scaleY;
-
-                // Flip the context for the text overlay as well
-                context.save();
-                context.translate(canvas.width, 0);
-                context.scale(-1, 1);
-                context.drawImage(text, textX, textY, text.clientWidth * scaleX, text.clientHeight * scaleY);
-                context.restore();
-            }
-
-            // Convert canvas to an image and trigger download
-            const link = document.createElement('a');
-            link.href = canvas.toDataURL('image/png');
-            link.download = 'screenshot.png';
-            link.click();
-        });
     </script>
 </body>
 </html>
