@@ -64,9 +64,9 @@
             }
         }
 
-        // Load overlay image (e.g., halo image for San Francisco Javier)
-        const haloImage = new Image();
-        haloImage.src = 'images/angel.png';  // Ensure the image path is correct and hosted online or in the same directory
+        // Load animated GIF overlay
+        const gifImage = new Image();
+        gifImage.src = 'images/halo.gif';  // Replace with the path to your GIF file
 
         // Render overlay onto the canvas
         function drawOverlay() {
@@ -78,12 +78,12 @@
             const haloWidth = 200;
             const haloHeight = 150;
 
-            overlayContext.drawImage(haloImage, haloX, haloY, haloWidth, haloHeight);
+            overlayContext.drawImage(gifImage, haloX, haloY, haloWidth, haloHeight);
             requestAnimationFrame(drawOverlay);
         }
 
         // Initiate functions
-        haloImage.onload = () => {
+        gifImage.onload = () => {
             startCamera();
             drawOverlay();
         };
