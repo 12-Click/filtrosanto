@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Face Lens</title>
+    <title>Face Lens with TensorFlow.js</title>
     <style>
         body {
             margin: 0;
@@ -40,13 +40,13 @@
         #halo {
             position: absolute;
             width: 50%;
-            top: 20%; /* Adjust based on face position */
+            top: 20%;
             transform: translateX(-50%);
         }
 
         #text {
             position: absolute;
-            bottom: 20%; /* Adjust based on face position */
+            bottom: 20%;
             transform: translateX(-50%);
         }
     </style>
@@ -56,36 +56,53 @@
         <video id="video" autoplay playsinline></video>
         <div id="overlay">
             <img id="halo" src="images/halo.gif" alt="Halo" />
-            <img id="text" src="images/text.gif" alt="Text" /> <!-- Replace with your GIF for text -->
+            <img id="text" src="images/text.gif" alt="Text" />
         </div>
     </div>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/tracking.js/1.1.2/tracking.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/face-landmarks-detection"></script>
     <script>
         const video = document.getElementById('video');
         const halo = document.getElementById('halo');
         const text = document.getElementById('text');
 
-        // Access the user's webcam
-        navigator.mediaDevices.getUserMedia({ video: true })
-            .then(stream => {
-                video.srcObject = stream;
-            })
-            .catch(error => {
-                console.error("Error accessing the camera: ", error);
+        async function setupCamera() {
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: true
             });
+            video.srcObject = stream;
+            return new Promise((resolve) => {
+                video.onloadedmetadata = () => {
+                    resolve(video);
+                };
+            });
+        }
 
-        // Face tracking
-        tracking.track(video, new tracking.ObjectTracker('face'), {
-            camera: true
-        }).on('track', function(event) {
-            if (event.data.length > 0) {
-                const rect = event.data[0].bounds;
-                halo.style.left = `${rect.x + rect.width / 2}px`;
-                halo.style.top = `${rect.y}px`;
-                text.style.left = `${rect.x + rect.width / 2}px`;
-                text.style.top = `${rect.y + rect.height}px`;
-            }
-        });
+        async function detectFace() {
+            const model = await faceLandmarksDetection.load(
+                faceLandmarksDetection.SupportedPackages.mediapipeFacemesh
+            );
+            const detect = async () => {
+                const predictions = await model.estimateFaces({ input: video });
+                if (predictions.length > 0) {
+                    const { boundingBox } = predictions[0];
+                    halo.style.left = `${boundingBox.topLeft[0] + boundingBox.bottomRight[0] / 2}px`;
+                    halo.style.top = `${boundingBox.topLeft[1]}px`;
+                    text.style.left = `${boundingBox.topLeft[0] + boundingBox.bottomRight[0] / 2}px`;
+                    text.style.top = `${boundingBox.bottomRight[1]}px`;
+                }
+                requestAnimationFrame(detect);
+            };
+            detect();
+        }
+
+        async function main() {
+            await setupCamera();
+            video.play();
+            detectFace();
+        }
+
+        main();
     </script>
 </body>
 </html>
