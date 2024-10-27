@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jovenes Misioneros!</title>
+    <title>Face Lens</title>
     <style>
         body {
             margin: 0;
@@ -44,8 +44,8 @@
 <body>
     <div class="container">
         <video id="video" playsinline autoplay></video>
-        <img id="halo" class="overlay" src="images/halo.gif" alt="Halo">
-        <img id="text" class="overlay" src="images/text.gif" alt="Text"> <!-- Change to your GIF -->
+        <img id="halo" class="overlay" src="halo.gif" alt="Halo">
+        <img id="text" class="overlay" src="text.gif" alt="Text"> <!-- Change to your GIF -->
     </div>
     
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils"></script>
@@ -82,9 +82,9 @@
                 halo.style.display = 'block';
                 text.style.display = 'block';
 
-                // Get the position for the halo (use a landmark higher up, e.g., forehead)
+                // Get the position for the halo (above the forehead)
                 const forehead = landmarks[10]; // Forehead landmark
-                const haloX = forehead.x * video.clientWidth;
+                const haloX = (1 - forehead.x) * video.clientWidth; // Adjust for mirrored effect
                 const haloY = forehead.y * video.clientHeight - 90; // Adjust higher above the head
 
                 halo.style.left = `${haloX}px`;
@@ -92,7 +92,7 @@
 
                 // Position the text under the chin (use the chin landmark for better placement)
                 const chin = landmarks[152];
-                const textX = chin.x * video.clientWidth;
+                const textX = (1 - chin.x) * video.clientWidth; // Adjust for mirrored effect
                 const textY = chin.y * video.clientHeight + 30; // Adjust as necessary for text positioning
 
                 text.style.left = `${textX}px`;
