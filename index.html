@@ -56,7 +56,7 @@
         <video id="video" playsinline autoplay muted></video> <!-- Added muted attribute -->
         <img id="halo" class="overlay" src="images/halo.gif" alt="Halo">
         <img id="text" class="overlay" src="images/text.gif" alt="Text"> <!-- Change to your GIF -->
-        <button id="screenshotButton">Camera</button> <!-- Screenshot button -->
+        <button id="screenshotButton">Captura tu Selfie</button> <!-- Screenshot button -->
     </div>
     
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils"></script>
@@ -120,18 +120,23 @@
             const context = canvas.getContext('2d');
 
             // Draw the current video frame
-            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            context.scale(-1, 1); // Flip the canvas horizontally
+            context.drawImage(video, -canvas.width, 0, canvas.width, canvas.height);
+
+            // Calculate the overlay positions based on the video aspect ratio
+            const scaleX = canvas.width / video.clientWidth;
+            const scaleY = canvas.height / video.clientHeight;
 
             // Draw the halo and text images onto the canvas
             if (halo.style.display === 'block') {
-                const haloX = parseFloat(halo.style.left);
-                const haloY = parseFloat(halo.style.top);
-                context.drawImage(halo, haloX, haloY, halo.clientWidth, halo.clientHeight);
+                const haloX = parseFloat(halo.style.left) * scaleX;
+                const haloY = parseFloat(halo.style.top) * scaleY;
+                context.drawImage(halo, haloX, haloY, halo.clientWidth * scaleX, halo.clientHeight * scaleY);
             }
             if (text.style.display === 'block') {
-                const textX = parseFloat(text.style.left);
-                const textY = parseFloat(text.style.top);
-                context.drawImage(text, textX, textY, text.clientWidth, text.clientHeight);
+                const textX = parseFloat(text.style.left) * scaleX;
+                const textY = parseFloat(text.style.top) * scaleY;
+                context.drawImage(text, textX, textY, text.clientWidth * scaleX, text.clientHeight * scaleY);
             }
 
             // Convert canvas to an image and trigger download
