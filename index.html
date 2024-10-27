@@ -86,7 +86,7 @@
                 // Get the position for the halo (above the forehead)
                 const forehead = landmarks[10]; // Forehead landmark
                 const haloX = (1 - forehead.x) * video.clientWidth; // Adjust for mirrored effect
-                const haloY = forehead.y * video.clientHeight - 150; // Adjust higher above the head
+                const haloY = forehead.y * video.clientHeight - 200; // Adjust higher above the head
 
                 halo.style.left = `${haloX}px`;
                 halo.style.top = `${haloY}px`;
