@@ -3,125 +3,99 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Face Lens with MediaPipe Face Mesh</title>
+    <title>Face Lens</title>
     <style>
         body {
             margin: 0;
             overflow: hidden;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background-color: black;
+            background: black;
         }
 
-        #camera-container {
+        .container {
             position: relative;
         }
 
-        #video {
-            width: 100%;
-            height: auto;
-            transform: scaleX(-1); /* Mirror the video */
+        video {
+            width: 100vw;
+            height: 100vh;
+            object-fit: cover;
+            transform: scaleX(-1); /* Mirror the video for a selfie effect */
         }
 
-        #overlay {
+        .overlay {
             position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
+            pointer-events: none; /* Prevent interaction with overlays */
         }
 
         #halo {
-            position: absolute;
-            width: 50%;
-            top: 20%; /* Adjust based on face position */
-            transform: translateX(-50%);
-            pointer-events: none; /* Allow clicks to go through */
+            width: 50%; /* Adjust size as needed */
+            top: 10%; /* Position above the head */
+            left: 50%;
+            transform: translate(-50%, 0);
         }
 
         #text {
-            position: absolute;
-            bottom: 20%; /* Adjust based on face position */
-            transform: translateX(-50%);
-            pointer-events: none; /* Allow clicks to go through */
+            width: 50%; /* Adjust size as needed */
+            bottom: 20%; /* Position under the chin */
+            left: 50%;
+            transform: translate(-50%, 0);
         }
     </style>
 </head>
 <body>
-    <div id="camera-container">
-        <video id="video" autoplay playsinline></video>
-        <div id="overlay">
-            <img id="halo" src="images/halo.gif" alt="Halo" />
-            <img id="text" src="images/text.gif" alt="Text" />
-        </div>
+    <div class="container">
+        <video id="video" playsinline autoplay></video>
+        <img id="halo" class="overlay" src="images/halo.gif" alt="Halo">
+        <img id="text" class="overlay" src="images/text.gif" alt="Text"> <!-- Change to your GIF -->
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/face-landmarks-detection"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh"></script>
     <script>
         const video = document.getElementById('video');
         const halo = document.getElementById('halo');
         const text = document.getElementById('text');
 
-        async function setupCamera() {
-            const stream = await navigator.mediaDevices.getUserMedia({
-                video: true
-            });
-            video.srcObject = stream;
-            return new Promise((resolve) => {
-                video.onloadedmetadata = () => {
-                    resolve(video);
-                };
-            });
+        // Load the face mesh model
+        const faceMesh = new FaceMesh({
+            locateFile: (file) => {
+                return `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`;
+            }
+        });
+
+        faceMesh.onResults(onResults);
+
+        // Set up the camera
+        const camera = new Camera(video, {
+            onFrame: async () => {
+                await faceMesh.send({image: video});
+            },
+            width: 640,
+            height: 480
+        });
+        camera.start();
+
+        function onResults(results) {
+            if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
+                const landmarks = results.multiFaceLandmarks[0];
+
+                // Get the position for the halo (use the nose tip for better placement)
+                const nose = landmarks[3];
+                const haloX = nose.x * video.clientWidth;
+                const haloY = nose.y * video.clientHeight - 50; // Adjust as necessary for halo positioning
+
+                halo.style.left = `${haloX}px`;
+                halo.style.top = `${haloY}px`;
+
+                // Position the text under the chin (use the chin landmark for better placement)
+                const chin = landmarks[152];
+                const textX = chin.x * video.clientWidth;
+                const textY = chin.y * video.clientHeight + 30; // Adjust as necessary for text positioning
+
+                text.style.left = `${textX}px`;
+                text.style.top = `${textY}px`;
+            }
         }
-
-        async function detectFace() {
-            // Load the MediaPipe Face Mesh model
-            const model = await faceLandmarksDetection.load(
-                faceLandmarksDetection.SupportedPackages.mediapipeFacemesh
-            );
-
-            const detect = async () => {
-                // Estimate the faces in the video
-                const predictions = await model.estimateFaces({ input: video });
-                if (predictions.length > 0) {
-                    const { boundingBox } = predictions[0];
-
-                    // Calculate the center position for halo and text
-                    const centerX = (boundingBox.topLeft[0] + boundingBox.bottomRight[0]) / 2;
-                    const topY = boundingBox.topLeft[1];
-                    const bottomY = boundingBox.bottomRight[1];
-
-                    // Position halo and text based on bounding box
-                    halo.style.left = `${centerX}px`;
-                    halo.style.top = `${topY}px`;
-                    text.style.left = `${centerX}px`;
-                    text.style.top = `${bottomY + 10}px`; // Positioning below the face
-
-                    // Set opacity for visibility
-                    halo.style.opacity = 1;
-                    text.style.opacity = 1;
-                } else {
-                    halo.style.opacity = 0; // Hide when no face is detected
-                    text.style.opacity = 0; // Hide when no face is detected
-                }
-                requestAnimationFrame(detect);
-            };
-            detect();
-        }
-
-        async function main() {
-            await setupCamera();
-            video.play();
-            detectFace();
-        }
-
-        main();
     </script>
 </body>
 </html>
