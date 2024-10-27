@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>San Francisco Javier</title>
+    <title>3D Face Filter - San Francisco Javier</title>
     <style>
         body {
             margin: 0;
@@ -13,37 +13,38 @@
             align-items: center;
             flex-direction: column;
             height: 100vh;
-            background: black; /* Set a black background for better contrast */
+            background: url('https://your-image-url.com/background.jpg') no-repeat center center fixed; /* Background image */
+            background-size: cover;
         }
 
         video {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100vw; /* Full screen width */
-            height: 100vh; /* Full screen height */
-            object-fit: cover; /* Cover the entire screen */
-            z-index: 0; /* Ensure video is behind the canvas */
-            display: none; /* Hide video element */
+            display: block; /* Show the video element */
+            width: 100%; /* Make the video take full width */
+            height: auto; /* Maintain aspect ratio */
         }
 
         canvas {
             position: absolute;
             top: 0;
             left: 0;
-            width: 100vw; /* Full screen width */
-            height: 100vh; /* Full screen height */
             z-index: 1; /* Ensure canvas is on top of video */
         }
 
-        .capture-icon {
-            position: absolute;
-            bottom: 20px; /* Position from bottom */
-            right: 20px; /* Position from right */
+        button {
+            position: relative;
+            z-index: 2; /* Ensure button is above the canvas */
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #4CAF50; /* Green */
+            color: white;
+            border: none;
+            border-radius: 5px;
             cursor: pointer;
-            width: 60px; /* Size of the icon */
-            height: auto; /* Maintain aspect ratio */
-            z-index: 2; /* Ensure icon is above the canvas */
+        }
+
+        button:hover {
+            background-color: #45a049; /* Darker green on hover */
         }
 
         img {
@@ -59,19 +60,21 @@
 <body>
     <video id="video" autoplay playsinline></video>
     <canvas id="canvas"></canvas>
-    <img class="capture-icon" id="capture" src="images/angel.png" alt="Capture Photo Icon" /> <!-- Replace with your camera icon URL -->
+    <button id="capture">Capture Photo</button>
     <img id="capturedPhoto" alt="Captured Photo" />
     <script>
         const video = document.getElementById('video');
         const canvas = document.getElementById('canvas');
-        const captureIcon = document.getElementById('capture');
+        const ctx = canvas.getContext('2d');
+        const captureButton = document.getElementById('capture');
         const capturedPhoto = document.getElementById('capturedPhoto');
 
-        // Load halo and wings images
-        const haloImage = new Image();
-        haloImage.src = 'images/angel.png'; // Replace with the URL of your halo image
-        const wingsImage = new Image();
-        wingsImage.src = 'images/angel.png'; // Replace with the URL of your wings image
+        let haloImage = new Image();
+        let wingsImage = new Image();
+        
+        // Load images
+        haloImage.src = 'https://your-image-url.com/halo.png'; // Replace with your halo image URL
+        wingsImage.src = 'https://your-image-url.com/wings.png'; // Replace with your wings image URL
 
         async function setupCamera() {
             try {
@@ -95,29 +98,11 @@
             return await faceLandmarksDetection.load(model);
         }
 
-        function drawHalo(x, y, size) {
-            // Draw the halo image centered at (x, y)
-            ctx.drawImage(haloImage, x - size / 2, y - size / 2, size, size);
-        }
-
-        function drawWings(x, y, size) {
-            // Draw the wings image centered around the face
-            const wingWidth = size * 1.5; // Width for wings image
-            const wingHeight = size; // Height for wings image
-
-            // Draw wings to the left and right of the face
-            ctx.drawImage(wingsImage, x - wingWidth / 2, y - wingHeight / 2, wingWidth, wingHeight);
-            ctx.drawImage(wingsImage, x + wingWidth / 2 - (wingWidth * 0.5), y - wingHeight / 2, wingWidth, wingHeight);
-        }
-
         async function main() {
             await setupCamera();
             const model = await loadFaceLandmarksModel();
-            const ctx = canvas.getContext('2d'); // Get the canvas context
-            canvas.width = window.innerWidth; // Full screen width
-            canvas.height = window.innerHeight; // Full screen height
-
-            let pulse = 0; // Initialize pulse variable
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
 
             const detectFace = async () => {
                 ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear previous drawings
@@ -129,18 +114,17 @@
                     predictions.forEach((prediction) => {
                         const keypoints = prediction.scaledMesh;
 
-                        // Calculate the position for the halo and wings
                         const x = keypoints[30][0]; // Nose tip
-                        const y = keypoints[30][1] - 50; // Position above the head for the halo
+                        const y = keypoints[30][1] - 100; // Position above the head for the halo
 
-                        // Animate size to create a pulsing effect
-                        const haloSize = 100 + Math.sin(pulse) * 20; // Pulsating size
-                        drawHalo(x, y, haloSize); // Draw halo with image
-                        drawWings(x, y, haloSize); // Draw wings around the face
+                        // Draw halo
+                        ctx.drawImage(haloImage, x - haloImage.width / 2, y - haloImage.height / 2);
+
+                        // Draw wings
+                        ctx.drawImage(wingsImage, x - wingsImage.width / 2, y - wingsImage.height / 2);
                     });
                 }
 
-                pulse += 0.1; // Increment pulse for the pulsating effect
                 requestAnimationFrame(detectFace);
             };
 
@@ -148,29 +132,12 @@
         }
 
         // Capture photo functionality
-        captureIcon.addEventListener('click', () => {
+        captureButton.addEventListener('click', () => {
             const photo = canvas.toDataURL('image/png'); // Capture the canvas as a PNG
-            
-            // Create a temporary link to trigger the download
-            const link = document.createElement('a');
-            link.href = photo; // Set the link's href to the photo data URL
-            link.download = 'captured_photo.png'; // Name for the downloaded file
-            document.body.appendChild(link); // Append link to the document
-            link.click(); // Trigger the download
-            document.body.removeChild(link); // Remove the link after triggering download
+            capturedPhoto.src = photo; // Set the src of the img element to the captured photo
         });
 
-        // Resize canvas when window resizes
-        window.addEventListener('resize', () => {
-            canvas.width = window.innerWidth; // Update canvas width
-            canvas.height = window.innerHeight; // Update canvas height
-        });
-
-        haloImage.onload = () => {
-            wingsImage.onload = () => {
-                main(); // Start the main function only after both images are loaded
-            };
-        };
+        main();
     </script>
 </body>
 </html>
