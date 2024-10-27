@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>San Francisco Javier</title>
+    <title>Saint Francis Xavier Face Lens</title>
     <style>
         body, html {
             margin: 0;
@@ -39,7 +39,7 @@
             position: absolute;
             width: 200px; /* Adjust for the halo size */
             height: 200px; /* Adjust for the halo size */
-            background: url('images/angel.png') no-repeat center center; /* Use your halo image */
+            background: url('halo.png') no-repeat center center; /* Use your halo image */
             background-size: cover; /* Adjust to fit */
             pointer-events: none; /* So it doesn't block the video */
             transform: translate(-50%, -50%); /* Center the overlay */
@@ -58,6 +58,7 @@
         const video = document.getElementById('video');
         const canvas = document.getElementById('canvas');
         const halo = document.getElementById('halo');
+        const ctx = canvas.getContext('2d');
 
         // Set up the video stream
         navigator.mediaDevices.getUserMedia({ video: true })
@@ -83,12 +84,12 @@
 
                 if (predictions.length > 0) {
                     const face = predictions[0];
-                    const x = face.boundingBox.topLeft[0] + (face.boundingBox.bottomRight[0] - face.boundingBox.topLeft[0]) / 2;
-                    const y = face.boundingBox.topLeft[1] + (face.boundingBox.bottomRight[1] - face.boundingBox.topLeft[1]) / 2;
+                    const x = (face.boundingBox.topLeft[0] + face.boundingBox.bottomRight[0]) / 2;
+                    const y = (face.boundingBox.topLeft[1] + face.boundingBox.bottomRight[1]) / 2;
 
-                    // Center the halo overlay on the detected face
+                    // Position the halo slightly above the detected face
                     halo.style.left = `${x}px`;
-                    halo.style.top = `${y}px`;
+                    halo.style.top = `${y - 100}px`; // Adjust 100 to position it higher above the face
                 } else {
                     halo.style.left = `50%`; // Reset position if no face detected
                     halo.style.top = `50%`; // Reset position if no face detected
@@ -106,3 +107,4 @@
     </script>
 </body>
 </html>
+
