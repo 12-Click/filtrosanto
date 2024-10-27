@@ -3,58 +3,94 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Face Lens</title>
+    <title>WebGL Face Lens with GIFs</title>
     <style>
         body {
             margin: 0;
             overflow: hidden;
             background: black;
         }
-
-        .container {
-            position: relative;
-        }
-
-        video {
-            width: 100vw;
-            height: 100vh;
-            object-fit: cover;
-            transform: scaleX(-1); /* Mirror the video for a selfie effect */
-        }
-
-        .overlay {
-            position: absolute;
-            pointer-events: none; /* Prevent interaction with overlays */
-        }
-
-        #halo {
-            width: 50%; /* Adjust size as needed */
-            top: 10%; /* Position above the head */
-            left: 50%;
-            transform: translate(-50%, 0);
-        }
-
-        #text {
-            width: 50%; /* Adjust size as needed */
-            bottom: 20%; /* Position under the chin */
-            left: 50%;
-            transform: translate(-50%, 0);
+        canvas {
+            display: block;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <video id="video" playsinline autoplay></video>
-        <img id="halo" class="overlay" src="images/halo.gif" alt="Halo">
-        <img id="text" class="overlay" src="images/text.gif" alt="Text"> <!-- Change to your GIF -->
-    </div>
-    
+    <script src="https://cdn.jsdelivr.net/npm/three@0.140.0/build/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh"></script>
     <script>
-        const video = document.getElementById('video');
-        const halo = document.getElementById('halo');
-        const text = document.getElementById('text');
+        let scene, camera, renderer;
+        let halo, textMesh;
+        const video = document.createElement('video');
+        const constraints = {
+            video: {
+                facingMode: 'user',
+                width: 640,
+                height: 480
+            }
+        };
+
+        // Function to create a texture from a GIF
+        function createGIFTexture(gifURL) {
+            const textureLoader = new THREE.TextureLoader();
+            return textureLoader.load(gifURL);
+        }
+
+        // Set up the scene
+        function init() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer({ alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(renderer.domElement);
+
+            // Load GIF textures
+            const haloTexture = createGIFTexture('images/halo.gif'); // Path to your halo GIF
+            const textTexture = createGIFTexture('images/text.gif'); // Path to your text GIF
+
+            // Set up halo using a plane geometry
+            const haloGeometry = new THREE.PlaneGeometry(0.3, 0.3); // Adjust size as needed
+            const haloMaterial = new THREE.MeshBasicMaterial({ map: haloTexture, transparent: true });
+            halo = new THREE.Mesh(haloGeometry, haloMaterial);
+            halo.position.z = -1; // Move it slightly away from the camera
+            scene.add(halo);
+
+            // Set up text using a plane geometry
+            const textGeometry = new THREE.PlaneGeometry(0.5, 0.2); // Adjust size as needed
+            const textMaterial = new THREE.MeshBasicMaterial({ map: textTexture, transparent: true });
+            textMesh = new THREE.Mesh(textGeometry, textMaterial);
+            textMesh.position.z = -1; // Move it slightly away from the camera
+            scene.add(textMesh);
+
+            // Set up the camera position
+            camera.position.z = 1;
+
+            // Start the video
+            navigator.mediaDevices.getUserMedia(constraints).then(stream => {
+                video.srcObject = stream;
+                video.play();
+            });
+
+            animate();
+        }
+
+        // Update halo and text position based on face landmarks
+        function updatePosition(landmarks) {
+            const nose = landmarks[3]; // Nose landmark
+            const chin = landmarks[152]; // Chin landmark
+
+            halo.position.x = (nose.x * 2 - 1); // Map to Three.js coordinates
+            halo.position.y = -(nose.y * 2 - 1) + 0.1; // Adjust for halo position
+
+            textMesh.position.x = (chin.x * 2 - 1); // Map to Three.js coordinates
+            textMesh.position.y = -(chin.y * 2 - 1) - 0.2; // Adjust for text position
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            renderer.render(scene, camera);
+        }
 
         // Load the face mesh model
         const faceMesh = new FaceMesh({
@@ -63,39 +99,22 @@
             }
         });
 
-        faceMesh.onResults(onResults);
+        faceMesh.onResults((results) => {
+            if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
+                updatePosition(results.multiFaceLandmarks[0]);
+            }
+        });
 
-        // Set up the camera
         const camera = new Camera(video, {
             onFrame: async () => {
-                await faceMesh.send({image: video});
+                await faceMesh.send({ image: video });
             },
             width: 640,
             height: 480
         });
         camera.start();
 
-        function onResults(results) {
-            if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
-                const landmarks = results.multiFaceLandmarks[0];
-
-                // Get the position for the halo (use the nose tip for better placement)
-                const nose = landmarks[3];
-                const haloX = nose.x * video.clientWidth;
-                const haloY = nose.y * video.clientHeight - 50; // Adjust as necessary for halo positioning
-
-                halo.style.left = `${haloX}px`;
-                halo.style.top = `${haloY}px`;
-
-                // Position the text under the chin (use the chin landmark for better placement)
-                const chin = landmarks[152];
-                const textX = chin.x * video.clientWidth;
-                const textY = chin.y * video.clientHeight + 30; // Adjust as necessary for text positioning
-
-                text.style.left = `${textX}px`;
-                text.style.top = `${textY}px`;
-            }
-        }
+        init();
     </script>
 </body>
 </html>
