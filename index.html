@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
-    <title>Jovenes Misioneros!</title>
+    <title>Face Tracking Halo with Snapshot</title>
     <style>
         * {
             margin: 0;
@@ -113,10 +113,12 @@
         camera.start();
 
         function onResults(results) {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
             if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
                 currentLandmarks = results.multiFaceLandmarks[0];
+
+                // Clear the canvas for the video feed
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height); // Draw the video
 
                 // Calculate positions for halo and chin text based on landmarks
                 const forehead = currentLandmarks[10];
@@ -136,7 +138,7 @@
                 }
             }
 
-            // Call requestAnimationFrame to keep the GIFs moving
+            // Call requestAnimationFrame to keep the loop going
             requestAnimationFrame(() => onResults(results));
         }
 
