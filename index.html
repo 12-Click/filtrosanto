@@ -56,7 +56,7 @@
         <video id="video" playsinline autoplay muted></video> <!-- Added muted attribute -->
         <img id="halo" class="overlay" src="images/halo.gif" alt="Halo">
         <img id="text" class="overlay" src="images/text.gif" alt="Text"> <!-- Change to your GIF -->
-        <button id="screenshotButton">Captura tu Selfie</button> <!-- Screenshot button -->
+        <button id="screenshotButton">Take Screenshot</button> <!-- Screenshot button -->
     </div>
     
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils"></script>
@@ -119,22 +119,25 @@
             canvas.height = video.videoHeight;
             const context = canvas.getContext('2d');
 
-            // Draw the current video frame
-            context.scale(-1, 1); // Flip the canvas horizontally
-            context.drawImage(video, -canvas.width, 0, canvas.width, canvas.height);
+            // Flip the context horizontally to match the live mirrored view
+            context.translate(canvas.width, 0);
+            context.scale(-1, 1);
 
-            // Calculate the overlay positions based on the video aspect ratio
+            // Draw the current video frame onto the canvas
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            // Calculate scaling for overlay positions
             const scaleX = canvas.width / video.clientWidth;
             const scaleY = canvas.height / video.clientHeight;
 
-            // Draw the halo and text images onto the canvas
+            // Draw the halo and text overlays in the correct position
             if (halo.style.display === 'block') {
-                const haloX = parseFloat(halo.style.left) * scaleX;
+                const haloX = parseFloat(halo.style.left) * scaleX - (halo.clientWidth * scaleX) / 2;
                 const haloY = parseFloat(halo.style.top) * scaleY;
                 context.drawImage(halo, haloX, haloY, halo.clientWidth * scaleX, halo.clientHeight * scaleY);
             }
             if (text.style.display === 'block') {
-                const textX = parseFloat(text.style.left) * scaleX;
+                const textX = parseFloat(text.style.left) * scaleX - (text.clientWidth * scaleX) / 2;
                 const textY = parseFloat(text.style.top) * scaleY;
                 context.drawImage(text, textX, textY, text.clientWidth * scaleX, text.clientHeight * scaleY);
             }
