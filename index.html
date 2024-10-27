@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D Face Filter - San Francisco Javier</title>
+    <title>San Francisco Javier</title>
     <style>
         body {
             margin: 0;
@@ -55,7 +55,7 @@
 <body>
     <video id="video" autoplay playsinline></video>
     <canvas id="canvas"></canvas>
-    <img id="cameraIcon" class="icon" src="https://your-image-url.com/camera-icon.png" alt="Capture" /> <!-- Replace with your camera icon URL -->
+    <img id="cameraIcon" class="icon" src="images/angel.png" alt="Capture" /> <!-- Replace with your camera icon URL -->
     <img id="capturedPhoto" alt="Captured Photo" style="display:none;"/> <!-- Hidden image for captured photo -->
     <script>
         const video = document.getElementById('video');
@@ -97,14 +97,18 @@
 
                 const predictions = await model.estimateFaces({ input: video });
 
+                console.log("Predictions:", predictions); // Log predictions for debugging
+
                 if (predictions.length > 0) {
                     predictions.forEach((prediction) => {
                         const keypoints = prediction.scaledMesh;
 
+                        console.log("Detected keypoints:", keypoints); // Log keypoints for debugging
+
                         const x = keypoints[30][0]; // Nose tip
                         const y = keypoints[30][1] - 100; // Position above the head for the halo
 
-                        // Temporary for testing: Draw a red square where the face is detected
+                        // Draw a red square where the face is detected
                         ctx.fillStyle = 'red'; 
                         ctx.fillRect(x - 10, y - 10, 20, 20); // Draw a red square
                     });
