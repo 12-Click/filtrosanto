@@ -24,6 +24,7 @@
             height: 100vh; /* Full screen height */
             object-fit: cover; /* Cover the entire screen */
             z-index: 0; /* Ensure video is behind the canvas */
+            display: none; /* Hide video element */
         }
 
         canvas {
@@ -66,9 +67,11 @@
         const captureIcon = document.getElementById('capture');
         const capturedPhoto = document.getElementById('capturedPhoto');
 
-        // Load halo image
+        // Load halo and wings images
         const haloImage = new Image();
         haloImage.src = 'URL_TO_YOUR_HALO_IMAGE.png'; // Replace with the URL of your halo image
+        const wingsImage = new Image();
+        wingsImage.src = 'URL_TO_YOUR_WINGS_IMAGE.png'; // Replace with the URL of your wings image
 
         async function setupCamera() {
             try {
@@ -97,9 +100,20 @@
             ctx.drawImage(haloImage, x - size / 2, y - size / 2, size, size);
         }
 
+        function drawWings(x, y, size) {
+            // Draw the wings image centered around the face
+            const wingWidth = size * 1.5; // Width for wings image
+            const wingHeight = size; // Height for wings image
+
+            // Draw wings to the left and right of the face
+            ctx.drawImage(wingsImage, x - wingWidth / 2, y - wingHeight / 2, wingWidth, wingHeight);
+            ctx.drawImage(wingsImage, x + wingWidth / 2 - (wingWidth * 0.5), y - wingHeight / 2, wingWidth, wingHeight);
+        }
+
         async function main() {
             await setupCamera();
             const model = await loadFaceLandmarksModel();
+            const ctx = canvas.getContext('2d'); // Get the canvas context
             canvas.width = window.innerWidth; // Full screen width
             canvas.height = window.innerHeight; // Full screen height
 
@@ -115,13 +129,14 @@
                     predictions.forEach((prediction) => {
                         const keypoints = prediction.scaledMesh;
 
-                        // Calculate the position for the halo
+                        // Calculate the position for the halo and wings
                         const x = keypoints[30][0]; // Nose tip
                         const y = keypoints[30][1] - 50; // Position above the head for the halo
 
                         // Animate size to create a pulsing effect
                         const haloSize = 100 + Math.sin(pulse) * 20; // Pulsating size
                         drawHalo(x, y, haloSize); // Draw halo with image
+                        drawWings(x, y, haloSize); // Draw wings around the face
                     });
                 }
 
@@ -152,7 +167,9 @@
         });
 
         haloImage.onload = () => {
-            main(); // Start the main function only after the halo image is loaded
+            wingsImage.onload = () => {
+                main(); // Start the main function only after both images are loaded
+            };
         };
     </script>
 </body>
