@@ -24,7 +24,7 @@
             height: 100vh;
             width: 100%;
         }
-        video, img {
+        video {
             position: absolute;
             width: 100vw;
             height: 100vh;
@@ -32,11 +32,11 @@
         }
         img.overlay {
             pointer-events: none;
-            width: 200px; /* Set the width of the GIF overlay */
+            width: 150px; /* Base width of GIF overlay, adjust as needed */
             position: absolute;
-            top: 20%; /* Adjust the vertical position */
-            left: 50%; /* Center horizontally */
-            transform: translateX(-50%); /* Centering adjustment */
+            top: 25%; /* Adjust this to position the GIF above the face */
+            left: 50%;
+            transform: translateX(-50%);
         }
     </style>
 </head>
@@ -46,12 +46,13 @@
         <video id="video" autoplay playsinline></video>
 
         <!-- GIF Overlay as an Image -->
-        <img src="images/halo.gif" alt="Halo Overlay" class="overlay"> <!-- Replace with your GIF path -->
+        <img src="images/halo.gif" alt="Halo Overlay" class="overlay" id="overlay"> <!-- Replace with your GIF path -->
     </div>
 
     <script>
         // Access HTML elements
         const video = document.getElementById('video');
+        const overlay = document.getElementById('overlay');
 
         // Start video stream from user's camera
         async function startCamera() {
@@ -63,8 +64,20 @@
             }
         }
 
-        // Start the camera when the page loads
-        startCamera();
+        // Adjust overlay position on screen resize for better alignment
+        function adjustOverlayPosition() {
+            const screenHeight = window.innerHeight;
+
+            // Position the overlay slightly above the center of the screen
+            overlay.style.top = `${screenHeight * 0.25}px`; // 25% down from the top
+        }
+
+        // Run functions on load and resize
+        window.onload = () => {
+            startCamera();
+            adjustOverlayPosition();
+        };
+        window.onresize = adjustOverlayPosition;
     </script>
 </body>
 </html>
