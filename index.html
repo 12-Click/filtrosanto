@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
-    <title>Face Tracking Halo with GIFs</title>
+    <title>Jovenes Misioneros!</title>
     <style>
         * {
             margin: 0;
@@ -57,11 +57,11 @@
 
         let currentLandmarks = null;
 
-        // Set desired dimensions for the GIFs
-        const haloWidth = 120; // Adjust width for the halo GIF
-        const haloHeight = 60; // Adjust height for the halo GIF
-        const chinWidth = 100;  // Adjust width for the chin text GIF
-        const chinHeight = 50; // Adjust height for the chin text GIF
+        // Set desired dimensions for the GIFs (Resize here)
+        const haloWidth = 80; // Adjust width for the halo GIF
+        const haloHeight = 40; // Adjust height for the halo GIF
+        const chinWidth = 80;  // Adjust width for the chin text GIF
+        const chinHeight = 30; // Adjust height for the chin text GIF
 
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
@@ -104,13 +104,13 @@
                 // Calculate positions for halo and chin text based on landmarks
                 const forehead = currentLandmarks[10];
                 const xHalo = forehead.x * canvas.width;
-                const yHalo = forehead.y * canvas.height - 80; // Offset above forehead
+                const yHalo = forehead.y * canvas.height - 120; // Adjusted offset above forehead
 
                 const chin = currentLandmarks[152];
                 const xChin = chin.x * canvas.width;
-                const yChin = chin.y * canvas.height + 40; // Offset below chin
+                const yChin = chin.y * canvas.height + 70; // Adjusted offset below chin
 
-                // Draw GIFs on the live feed canvas
+                // Show GIFs on the live feed canvas
                 const haloGif = document.getElementById('halo-gif');
                 const chinGif = document.getElementById('chin-gif');
 
