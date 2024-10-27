@@ -2,138 +2,124 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
-    <title>Jovenes Misioneros!</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Face Lens with Halo and Chin GIF</title>
     <style>
-        * {
+        body, html {
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
-        }
-        body, html {
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            background-color: #f4f4f4;
-        }
-        .camera-container {
-            position: relative;
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100%;
-            width: 100%;
+            height: 100vh;
+            background-color: #000;
             overflow: hidden;
         }
-        video, canvas {
+        .container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        #video {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            width: 100vw;
+            height: 100vh;
             object-fit: cover;
         }
-        #halo-gif, #chin-gif {
+        #overlay {
             position: absolute;
-            pointer-events: none;
-            display: none;
+            width: 100vw;
+            height: 100vh;
         }
     </style>
 </head>
 <body>
-    <div class="camera-container">
+    <div class="container">
         <video id="video" autoplay playsinline></video>
-        <canvas id="canvas"></canvas>
-        <img id="halo-gif" src="images/halo.gif" style="display: none;">
-        <img id="chin-gif" src="images/text.gif" style="display: none;">
+        <canvas id="overlay"></canvas>
     </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+    
+    <!-- Load face-api.js from CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/face-api.js"></script>
 
     <script>
         const video = document.getElementById('video');
-        const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
+        const overlay = document.getElementById('overlay');
+        const ctx = overlay.getContext('2d');
 
-        const haloGif = document.getElementById('halo-gif');
-        const chinGif = document.getElementById('chin-gif');
-
-        // Set GIF dimensions
-        const haloWidth = 60;
-        const haloHeight = 30;
-        const chinWidth = 60;
-        const chinHeight = 20;
-
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-
-        async function startCamera() {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                video.srcObject = stream;
-            } catch (error) {
-                console.error('Error accessing camera:', error);
-            }
+        // Load face-api.js models
+        async function loadModels() {
+            await faceapi.nets.tinyFaceDetector.loadFromUri('/models');
+            await faceapi.nets.faceLandmark68TinyNet.loadFromUri('/models');
         }
 
-        const faceMesh = new FaceMesh({
-            locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`,
-        });
-        faceMesh.setOptions({
-            maxNumFaces: 1,
-            minDetectionConfidence: 0.5,
-            minTrackingConfidence: 0.5,
-        });
-
-        faceMesh.onResults(onResults);
-
-        const camera = new Camera(video, {
-            onFrame: async () => {
-                await faceMesh.send({ image: video });
-            },
-            width: 1280,
-            height: 720
-        });
-        camera.start();
-
-        function onResults(results) {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
-                const landmarks = results.multiFaceLandmarks[0];
-
-                // Calculate scaling factors for mobile screens
-                const scalingFactorX = canvas.width;
-                const scalingFactorY = canvas.height;
-
-                // Calculate halo position above the forehead
-                const forehead = landmarks[10];
-                const xHalo = forehead.x * scalingFactorX - haloWidth / 2;
-                const yHalo = forehead.y * scalingFactorY - haloHeight - 100;
-
-                // Calculate chin position below the chin
-                const chin = landmarks[152];
-                const xChin = chin.x * scalingFactorX - chinWidth / 2;
-                const yChin = chin.y * scalingFactorY + 30;
-
-                // Show and position the GIFs
-                haloGif.style.display = 'block';
-                chinGif.style.display = 'block';
-
-                haloGif.style.left = `${xHalo}px`;
-                haloGif.style.top = `${yHalo}px`;
-
-                chinGif.style.left = `${xChin}px`;
-                chinGif.style.top = `${yChin}px`;
-            } else {
-                // Hide GIFs if no face is detected
-                haloGif.style.display = 'none';
-                chinGif.style.display = 'none';
-            }
+        // Start video stream
+        async function startVideo() {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: {} });
+            video.srcObject = stream;
         }
 
-        startCamera();
+        // Draw halo and chin GIF based on detected face
+        async function detectFace() {
+            const detectionOptions = new faceapi.TinyFaceDetectorOptions();
+            const detections = await faceapi.detectAllFaces(video, detectionOptions)
+                                            .withFaceLandmarks(true);
+
+            // Clear previous drawings
+            ctx.clearRect(0, 0, overlay.width, overlay.height);
+
+            detections.forEach(detection => {
+                const { landmarks } = detection;
+
+                // Get key points for placing images and text
+                const chin = landmarks.getMouth()[3]; // Chin point (below mouth)
+                const haloPosition = landmarks.getNose()[0]; // Nose (for halo above head)
+
+                const haloY = haloPosition.y - 120;
+                const haloX = haloPosition.x - 50;
+
+                const chinY = chin.y + 30;
+                const chinX = chin.x - 40;
+
+                // Draw halo GIF above head
+                const haloImg = new Image();
+                haloImg.src = 'images/halo.gif';
+                haloImg.onload = () => {
+                    ctx.drawImage(haloImg, haloX, haloY, 150, 50);
+                };
+
+                // Draw chin GIF under the chin
+                const chinGif = new Image();
+                chinGif.src = 'images/text.gif';
+                chinGif.onload = () => {
+                    ctx.drawImage(chinGif, chinX, chinY, 80, 50);
+                };
+
+                // Draw text under the chin
+                ctx.fillStyle = "#FFF";
+                ctx.font = "20px Arial";
+                ctx.textAlign = "center";
+                ctx.fillText("Hello!", chin.x, chin.y + 80);
+            });
+        }
+
+        // Initialize
+        async function init() {
+            await loadModels();
+            await startVideo();
+
+            video.addEventListener('play', () => {
+                overlay.width = video.videoWidth;
+                overlay.height = video.videoHeight;
+
+                setInterval(detectFace, 100);
+            });
+        }
+
+        init();
     </script>
 </body>
 </html>
