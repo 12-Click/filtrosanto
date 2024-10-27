@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
-    <title>Jovenes Misioneros!</title>
+    <title>Face Tracking Halo with GIFs</title>
     <style>
         * {
             margin: 0;
@@ -36,6 +36,7 @@
         #halo-gif, #chin-gif {
             position: absolute;
             pointer-events: none; /* Prevent interaction with GIFs */
+            display: none; /* Initially hide GIFs */
         }
     </style>
 </head>
@@ -57,11 +58,11 @@
 
         let currentLandmarks = null;
 
-        // Set desired dimensions for the GIFs (Resize here)
-        const haloWidth = 80; // Adjust width for the halo GIF
-        const haloHeight = 40; // Adjust height for the halo GIF
-        const chinWidth = 80;  // Adjust width for the chin text GIF
-        const chinHeight = 30; // Adjust height for the chin text GIF
+        // Set desired dimensions for the GIFs (smaller size)
+        const haloWidth = 60; // Width for the halo GIF
+        const haloHeight = 30; // Height for the halo GIF
+        const chinWidth = 60;  // Width for the chin text GIF
+        const chinHeight = 20; // Height for the chin text GIF
 
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
@@ -104,11 +105,11 @@
                 // Calculate positions for halo and chin text based on landmarks
                 const forehead = currentLandmarks[10];
                 const xHalo = forehead.x * canvas.width;
-                const yHalo = forehead.y * canvas.height - 120; // Adjusted offset above forehead
+                const yHalo = forehead.y * canvas.height - 100; // Offset above forehead
 
                 const chin = currentLandmarks[152];
                 const xChin = chin.x * canvas.width;
-                const yChin = chin.y * canvas.height + 70; // Adjusted offset below chin
+                const yChin = chin.y * canvas.height + 50; // Offset below chin
 
                 // Show GIFs on the live feed canvas
                 const haloGif = document.getElementById('halo-gif');
@@ -133,3 +134,4 @@
     </script>
 </body>
 </html>
+
