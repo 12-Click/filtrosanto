@@ -35,8 +35,8 @@
         }
         #halo-gif, #chin-gif {
             position: absolute;
-            pointer-events: none; /* Prevent interaction with GIFs */
-            display: none; /* Initially hide GIFs */
+            pointer-events: none;
+            display: none;
         }
     </style>
 </head>
@@ -44,8 +44,8 @@
     <div class="camera-container">
         <video id="video" autoplay playsinline></video>
         <canvas id="canvas"></canvas>
-        <img id="halo-gif" src="images/halo.gif" style="display: none;"> <!-- Replace with your actual path to the halo GIF -->
-        <img id="chin-gif" src="images/text.gif" style="display: none;"> <!-- Replace with your actual path to the chin text GIF -->
+        <img id="halo-gif" src="images/halo.gif" style="display: none;">
+        <img id="chin-gif" src="images/text.gif" style="display: none;">
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script>
@@ -56,13 +56,14 @@
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
 
-        let currentLandmarks = null;
+        const haloGif = document.getElementById('halo-gif');
+        const chinGif = document.getElementById('chin-gif');
 
-        // Set desired dimensions for the GIFs (smaller size)
-        const haloWidth = 60; // Width for the halo GIF
-        const haloHeight = 30; // Height for the halo GIF
-        const chinWidth = 60;  // Width for the chin text GIF
-        const chinHeight = 20; // Height for the chin text GIF
+        // Set GIF dimensions
+        const haloWidth = 60;
+        const haloHeight = 30;
+        const chinWidth = 60;
+        const chinHeight = 20;
 
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
@@ -100,38 +101,35 @@
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
-                currentLandmarks = results.multiFaceLandmarks[0];
+                const landmarks = results.multiFaceLandmarks[0];
 
-                // Calculate positions for halo and chin text based on landmarks
-                const forehead = currentLandmarks[10];
-                const xHalo = forehead.x * canvas.width;
-                const yHalo = forehead.y * canvas.height - 100; // Offset above forehead
+                // Calculate halo position above the forehead
+                const forehead = landmarks[10];
+                const xHalo = forehead.x * canvas.width - haloWidth / 2;
+                const yHalo = forehead.y * canvas.height - haloHeight - 60;
 
-                const chin = currentLandmarks[152];
-                const xChin = chin.x * canvas.width;
-                const yChin = chin.y * canvas.height + 50; // Offset below chin
+                // Calculate chin position below the chin
+                const chin = landmarks[152];
+                const xChin = chin.x * canvas.width - chinWidth / 2;
+                const yChin = chin.y * canvas.height + 20;
 
-                // Show GIFs on the live feed canvas
-                const haloGif = document.getElementById('halo-gif');
-                const chinGif = document.getElementById('chin-gif');
+                // Show and position the GIFs
+                haloGif.style.display = 'block';
+                chinGif.style.display = 'block';
 
-                haloGif.style.display = 'block'; // Show the GIF
-                chinGif.style.display = 'block'; // Show the GIF
+                haloGif.style.left = `${xHalo}px`;
+                haloGif.style.top = `${yHalo}px`;
 
-                // Position the GIFs
-                haloGif.style.left = `${xHalo - haloWidth / 2}px`;
-                haloGif.style.top = `${yHalo - haloHeight}px`;
-
-                chinGif.style.left = `${xChin - chinWidth / 2}px`;
+                chinGif.style.left = `${xChin}px`;
                 chinGif.style.top = `${yChin}px`;
+            } else {
+                // Hide GIFs if no face is detected
+                haloGif.style.display = 'none';
+                chinGif.style.display = 'none';
             }
-
-            // Call requestAnimationFrame to keep the GIFs moving
-            requestAnimationFrame(() => onResults(results));
         }
 
         startCamera();
     </script>
 </body>
 </html>
-
