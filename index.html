@@ -3,138 +3,104 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mobile Face Filter</title>
+    <title>3D Face Filter - San Francisco Javier</title>
     <style>
         body {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            background-color: #f0f0f0;
             margin: 0;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: url('https://your-image-url.com/background.jpg') no-repeat center center fixed; /* Background image */
+            background-size: cover;
         }
-        #video {
-            width: 100%;
-            max-width: 400px;
-            border: 2px solid #3498db;
+
+        video {
+            display: none; /* Hide the video element */
         }
-        #overlay {
+
+        canvas {
             position: absolute;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none; /* Allow clicks to go through */
-        }
-        #take-picture {
-            margin-top: 20px;
-            padding: 12px 24px;
-            font-size: 18px;
-            background-color: #3498db;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-        }
-        #captured-image {
-            display: none;
-            margin-top: 20px;
-            max-width: 100%;
         }
     </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://unpkg.com/@tensorflow/tfjs"></script>
+    <script src="https://unpkg.com/@tensorflow-models/face-landmarks-detection"></script>
 </head>
 <body>
+    <video id="video" autoplay playsinline></video>
+    <canvas id="canvas"></canvas>
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
 
-<video id="video" autoplay muted></video>
-<canvas id="overlay"></canvas>
-<button id="take-picture">Take Picture</button>
-<img id="captured-image" alt="Captured Image">
-
-<script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api@latest/dist/face-api.min.js"></script>
-<script>
-    const video = document.getElementById('video');
-    const canvas = document.getElementById('overlay');
-    const context = canvas.getContext('2d');
-    const capturedImage = document.getElementById('captured-image');
-    const takePictureButton = document.getElementById('take-picture');
-
-    // Load the models
-    async function loadModels() {
-        await faceapi.nets.tinyFaceDetector.loadFromUri('/models');
-        await faceapi.nets.faceLandmark68Net.loadFromUri('/models');
-    }
-
-    // Start video stream
-    async function startVideo() {
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        async function setupCamera() {
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: true,
+            });
             video.srcObject = stream;
-        } catch (err) {
-            console.error("Error accessing camera:", err);
-            alert("Could not access camera. Please allow camera access.");
-        }
-    }
-
-    // Detect faces
-    async function detectFaces() {
-        const options = new faceapi.TinyFaceDetectorOptions();
-        const result = await faceapi.detectSingleFace(video, options).withFaceLandmarks();
-
-        if (result) {
-            const { width, height } = video.getBoundingClientRect();
-            canvas.width = width;
-            canvas.height = height;
-            context.clearRect(0, 0, width, height);
-
-            const resizedResult = faceapi.resizeResults(result, { width, height });
-            const landmarks = resizedResult.landmarks;
-            const nose = landmarks.getNose();
-
-            if (nose) {
-                const noseX = nose[3].x;
-                const noseY = nose[3].y;
-                context.beginPath();
-                context.arc(noseX, noseY - 20, 30, 0, Math.PI * 2);
-                context.strokeStyle = 'gold';
-                context.lineWidth = 5;
-                context.stroke();
-                context.closePath();
-            }
+            return new Promise((resolve) => {
+                video.onloadedmetadata = () => {
+                    resolve(video);
+                };
+            });
         }
 
-        requestAnimationFrame(detectFaces);
-    }
+        async function loadFaceLandmarksModel() {
+            const model = faceLandmarksDetection.SupportedModels.MediaPipeFaceMesh;
+            return await faceLandmarksDetection.load(model);
+        }
 
-    // Capture image
-    function captureImage() {
-        const offscreenCanvas = document.createElement('canvas');
-        offscreenCanvas.width = video.videoWidth;
-        offscreenCanvas.height = video.videoHeight;
-        const offscreenContext = offscreenCanvas.getContext('2d');
+        function drawCross(x, y, size) {
+            ctx.fillStyle = 'gold';
+            ctx.fillRect(x - size / 2, y - size * 2, size, size * 4); // Vertical part
+            ctx.fillRect(x - size * 2, y - size / 2, size * 4, size); // Horizontal part
+        }
 
-        offscreenContext.drawImage(video, 0, 0);
-        offscreenContext.drawImage(canvas, 0, 0);
-        
-        const imageDataUrl = offscreenCanvas.toDataURL('image/png');
-        capturedImage.src = imageDataUrl;
-        capturedImage.style.display = 'block';
-    }
+        function drawBanners() {
+            ctx.fillStyle = 'rgba(255, 215, 0, 0.8)';
+            ctx.fillRect(0, 0, canvas.width, 50); // Top banner
+            ctx.fillRect(0, canvas.height - 50, canvas.width, 50); // Bottom banner
 
-    // Button event listener
-    takePictureButton.addEventListener('click', () => {
-        captureImage();
-    });
+            ctx.fillStyle = 'black';
+            ctx.font = '24px Arial';
+            ctx.fillText('¡Viva San Francisco Javier!', canvas.width / 2 - 130, 30);
+            ctx.fillText('Missions and Fun!', canvas.width / 2 - 100, canvas.height - 20);
+        }
 
-    // Initialize everything
-    async function init() {
-        await loadModels();
-        await startVideo();
-        video.addEventListener('play', detectFaces);
-    }
+        async function main() {
+            await setupCamera();
+            const model = await loadFaceLandmarksModel();
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
 
-    init();
-</script>
+            const detectFace = async () => {
+                const predictions = await model.estimateFaces({ input: video });
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
+                if (predictions.length > 0) {
+                    predictions.forEach((prediction) => {
+                        const keypoints = prediction.scaledMesh;
+
+                        // Draw the 3D inspired cross on the face
+                        drawCross(keypoints[30][0], keypoints[30][1], 20); // Position on the nose
+
+                        // Optional: Draw fun decorations
+                        drawBanners();
+                    });
+                }
+
+                requestAnimationFrame(detectFace);
+            };
+
+            detectFace();
+        }
+
+        main();
+    </script>
 </body>
 </html>
