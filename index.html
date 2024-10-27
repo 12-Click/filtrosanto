@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Saint Francis Xavier AR Face Filter</title>
+    <style>
+        body { margin: 0; overflow: hidden; }
+        #video, #overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+        #halo { position: absolute; top: 10%; left: 50%; transform: translate(-50%, -50%); width: 200px; opacity: 0.8; }
+    </style>
+</head>
+<body>
+    <!-- Video and Canvas Elements -->
+    <video id="video" autoplay muted playsinline></video>
+    <canvas id="overlay"></canvas>
+
+    <!-- Halo Image for Overlay -->
+    <img id="halo" src="https://your-image-url.com/halo.png" alt="Halo Overlay">
+
+    <!-- Face Detection and Rendering Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/face-api.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <script>
+        async function startAR() {
+            // Load Face Detection Models from Hosted URLs
+            await faceapi.nets.tinyFaceDetector.loadFromUri('https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights');
+            await faceapi.nets.faceLandmark68Net.loadFromUri('https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights');
+            await faceapi.nets.faceRecognitionNet.loadFromUri('https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights');
+
+            // Start Video
+            const video = document.getElementById('video');
+            const halo = document.getElementById('halo');
+            navigator.mediaDevices.getUserMedia({ video: {} })
+                .then(stream => video.srcObject = stream);
+
+            video.addEventListener('play', () => {
+                const canvas = faceapi.createCanvasFromMedia(video);
+                document.body.append(canvas);
+                const displaySize = { width: video.width, height: video.height };
+                faceapi.matchDimensions(canvas, displaySize);
+
+                // Detect Face and Adjust Overlay Position
+                setInterval(async () => {
+                    const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions());
+                    const resizedDetections = faceapi.resizeResults(detections, displaySize);
+
+                    canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+                    faceapi.draw.drawDetections(canvas, resizedDetections);
+
+                    if (detections.length > 0) {
+                        const { box } = detections[0].detection;
+                        // Position the halo based on face location
+                        halo.style.top = `${box.top - 100}px`;
+                        halo.style.left = `${box.left + box.width / 2}px`;
+                    }
+                }, 100);
+            });
+        }
+
+        startAR();
+    </script>
+</body>
+</html>
