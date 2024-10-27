@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D Face Filter - San Francisco Javier</title>
+    <title>San Francisco Javier</title>
     <style>
         body {
             margin: 0;
@@ -11,13 +11,16 @@
             display: flex;
             justify-content: center;
             align-items: center;
+            flex-direction: column;
             height: 100vh;
             background: url('https://your-image-url.com/background.jpg') no-repeat center center fixed; /* Background image */
             background-size: cover;
         }
 
         video {
-            display: none; /* Hide the video element */
+            display: block; /* Show the video element */
+            width: 100%; /* Make the video take full width */
+            height: auto; /* Maintain aspect ratio */
         }
 
         canvas {
@@ -25,6 +28,29 @@
             top: 0;
             left: 0;
             z-index: 1; /* Ensure canvas is on top of video */
+        }
+
+        button {
+            position: relative;
+            z-index: 2; /* Ensure button is above the canvas */
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #4CAF50; /* Green */
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049; /* Darker green on hover */
+        }
+
+        img {
+            margin-top: 20px;
+            max-width: 90%;
+            border: 2px solid #fff;
         }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -34,22 +60,30 @@
 <body>
     <video id="video" autoplay playsinline></video>
     <canvas id="canvas"></canvas>
+    <button id="capture">Capture Photo</button>
+    <img id="capturedPhoto" alt="Captured Photo" />
     <script>
         const video = document.getElementById('video');
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
+        const captureButton = document.getElementById('capture');
+        const capturedPhoto = document.getElementById('capturedPhoto');
 
         async function setupCamera() {
-            const stream = await navigator.mediaDevices.getUserMedia({
-                video: true,
-            });
-            video.srcObject = stream;
-            return new Promise((resolve) => {
-                video.onloadedmetadata = () => {
-                    video.play(); // Play the video after metadata is loaded
-                    resolve(video);
-                };
-            });
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                video.srcObject = stream;
+
+                return new Promise((resolve) => {
+                    video.onloadedmetadata = () => {
+                        video.play(); // Play the video after metadata is loaded
+                        resolve(video);
+                    };
+                });
+            } catch (error) {
+                console.error("Error accessing the camera: ", error);
+                alert("Could not access the camera. Please check your permissions.");
+            }
         }
 
         async function loadFaceLandmarksModel() {
@@ -112,6 +146,12 @@
 
             detectFace();
         }
+
+        // Capture photo functionality
+        captureButton.addEventListener('click', () => {
+            const photo = canvas.toDataURL('image/png'); // Capture the canvas as a PNG
+            capturedPhoto.src = photo; // Set the src of the img element to the captured photo
+        });
 
         main();
     </script>
