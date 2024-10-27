@@ -39,8 +39,8 @@
         }
         #snapshot-btn {
             position: absolute;
-            bottom: 20px; /* Distance from the bottom */
-            right: 20px;  /* Distance from the right */
+            bottom: 20px;
+            left: 20px; /* Positioning button in the corner */
             padding: 10px 20px;
             background-color: #007bff;
             color: white;
@@ -60,8 +60,10 @@
         <!-- Canvas for FaceMesh drawing (optional) -->
         <canvas id="canvas"></canvas>
 
-        <!-- GIF Overlay as an Image -->
-        <img src="images/halo.gif" alt="Halo Overlay" class="overlay" id="overlay"> <!-- Replace with your GIF path -->
+        <!-- GIF Overlays as Images -->
+        <img src="images/halo2.gif" alt="Halo Overlay" class="overlay" id="haloOverlay"> <!-- Halo Overlay -->
+        <img src="images/cheek.gif" alt="Left Cheek Overlay" class="overlay" id="cheekOverlay"> <!-- Left Cheek Overlay -->
+        <img src="images/chin.gif" alt="Chin Overlay" class="overlay" id="chinOverlay"> <!-- Chin Overlay -->
 
         <!-- Snapshot Button -->
         <button id="snapshot-btn">Take Snapshot</button>
@@ -74,7 +76,9 @@
     <script>
         const video = document.getElementById('video');
         const canvas = document.getElementById('canvas');
-        const overlay = document.getElementById('overlay');
+        const haloOverlay = document.getElementById('haloOverlay');
+        const cheekOverlay = document.getElementById('cheekOverlay');
+        const chinOverlay = document.getElementById('chinOverlay');
         const snapshotBtn = document.getElementById('snapshot-btn');
         const ctx = canvas.getContext('2d');
 
@@ -122,17 +126,32 @@
             if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
                 const landmarks = results.multiFaceLandmarks[0];
 
-                // Use landmark at the forehead for halo position (e.g., landmark #10)
-                const forehead = landmarks[10];
-                const x = forehead.x * canvas.width;
-                const y = forehead.y * canvas.height - 80; // Offset halo above the head
+                // Use landmarks for positioning overlays
+                const forehead = landmarks[10]; // Forehead for halo
+                const leftCheek = landmarks[234]; // Left cheek for cheek overlay
+                const rightCheek = landmarks[454]; // Right cheek for cheek overlay
+                const chin = landmarks[152]; // Chin for chin overlay
 
-                // Position the halo overlay image based on forehead landmark
-                overlay.style.left = `${x}px`;
-                overlay.style.top = `${y}px`;
+                // Position overlays based on landmarks
+                const haloX = forehead.x * canvas.width;
+                const haloY = forehead.y * canvas.height - 80; // Offset halo above the head
+                const cheekX = leftCheek.x * canvas.width;
+                const cheekY = leftCheek.y * canvas.height - 20; // Offset cheek overlay
+                const chinX = chin.x * canvas.width;
+                const chinY = chin.y * canvas.height + 20; // Offset chin overlay
 
-                // Show the halo only if a face is detected
-                overlay.style.display = 'block';
+                // Set overlay positions
+                haloOverlay.style.left = `${haloX}px`;
+                haloOverlay.style.top = `${haloY}px`;
+                cheekOverlay.style.left = `${cheekX}px`;
+                cheekOverlay.style.top = `${cheekY}px`;
+                chinOverlay.style.left = `${chinX}px`;
+                chinOverlay.style.top = `${chinY}px`;
+
+                // Show the overlays only if a face is detected
+                haloOverlay.style.display = 'block';
+                cheekOverlay.style.display = 'block';
+                chinOverlay.style.display = 'block';
 
                 // (Optional) Draw face mesh on canvas for visualization
                 drawConnectors(ctx, landmarks, FaceMesh.FACEMESH_TESSELATION,
@@ -141,8 +160,10 @@
                 drawConnectors(ctx, landmarks, FaceMesh.FACEMESH_LEFT_EYE, { color: '#30FF30' });
                 drawConnectors(ctx, landmarks, FaceMesh.FACEMESH_LIPS, { color: '#E0E0E0' });
             } else {
-                // Hide the halo if no face is detected
-                overlay.style.display = 'none';
+                // Hide the overlays if no face is detected
+                haloOverlay.style.display = 'none';
+                cheekOverlay.style.display = 'none';
+                chinOverlay.style.display = 'none';
             }
         }
 
@@ -157,10 +178,18 @@
             // Draw the video frame
             snapshotCtx.drawImage(video, 0, 0, snapshotCanvas.width, snapshotCanvas.height);
 
-            // Draw the overlay image at the calculated position
-            const haloX = parseFloat(overlay.style.left) || 0;
-            const haloY = parseFloat(overlay.style.top) || 0;
-            snapshotCtx.drawImage(overlay, haloX - overlay.width / 2, haloY - overlay.height);
+            // Draw the overlays
+            const haloX = parseFloat(haloOverlay.style.left) || 0;
+            const haloY = parseFloat(haloOverlay.style.top) || 0;
+            snapshotCtx.drawImage(haloOverlay, haloX - haloOverlay.width / 2, haloY - haloOverlay.height);
+
+            const cheekX = parseFloat(cheekOverlay.style.left) || 0;
+            const cheekY = parseFloat(cheekOverlay.style.top) || 0;
+            snapshotCtx.drawImage(cheekOverlay, cheekX - cheekOverlay.width / 2, cheekY - cheekOverlay.height);
+
+            const chinX = parseFloat(chinOverlay.style.left) || 0;
+            const chinY = parseFloat(chinOverlay.style.top) || 0;
+            snapshotCtx.drawImage(chinOverlay, chinX - chinOverlay.width / 2, chinY - chinOverlay.height);
 
             // Create an image link for downloading
             const link = document.createElement('a');
@@ -173,4 +202,3 @@
     </script>
 </body>
 </html>
-
