@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Saint Francis Xavier Face Lens</title>
+    <title>San Francisco Javier</title>
     <style>
         body, html {
             margin: 0;
@@ -37,35 +37,27 @@
 
         .overlay {
             position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
             width: 200px; /* Adjust for the halo size */
             height: 200px; /* Adjust for the halo size */
             background: url('images/angel.png') no-repeat center center; /* Use your halo image */
             background-size: cover; /* Adjust to fit */
             pointer-events: none; /* So it doesn't block the video */
-            animation: pulse 1.5s infinite; /* Optional pulse effect */
-        }
-
-        @keyframes pulse {
-            0% { transform: translate(-50%, -50%) scale(1); }
-            50% { transform: translate(-50%, -50%) scale(1.1); }
-            100% { transform: translate(-50%, -50%) scale(1); }
+            transform: translate(-50%, -50%); /* Center the overlay */
         }
     </style>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tensorflow/3.9.0/tensorflow.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/face-landmarks-detection"></script>
 </head>
 <body>
     <div class="container">
         <video id="video" autoplay playsinline></video>
         <canvas id="canvas"></canvas>
-        <div class="overlay"></div>
+        <div class="overlay" id="halo"></div>
     </div>
     <script>
         const video = document.getElementById('video');
         const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
+        const halo = document.getElementById('halo');
 
         // Set up the video stream
         navigator.mediaDevices.getUserMedia({ video: true })
@@ -76,19 +68,41 @@
                 console.error('Error accessing the camera: ', err);
             });
 
-        // Set canvas size
+        // Load the face mesh model
+        async function loadFaceMesh() {
+            const model = await faceLandmarksDetection.load(faceLandmarksDetection.SupportedPackages.mediapipeFacemesh);
+            detectFaces(model);
+        }
+
+        // Detect faces and update the overlay position
+        async function detectFaces(model) {
+            while (true) {
+                const predictions = await model.estimateFaces({ input: video });
+
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                if (predictions.length > 0) {
+                    const face = predictions[0];
+                    const x = face.boundingBox.topLeft[0] + (face.boundingBox.bottomRight[0] - face.boundingBox.topLeft[0]) / 2;
+                    const y = face.boundingBox.topLeft[1] + (face.boundingBox.bottomRight[1] - face.boundingBox.topLeft[1]) / 2;
+
+                    // Center the halo overlay on the detected face
+                    halo.style.left = `${x}px`;
+                    halo.style.top = `${y}px`;
+                } else {
+                    halo.style.left = `50%`; // Reset position if no face detected
+                    halo.style.top = `50%`; // Reset position if no face detected
+                }
+
+                await new Promise(requestAnimationFrame); // Use requestAnimationFrame for smoothness
+            }
+        }
+
         video.addEventListener('loadedmetadata', () => {
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
+            loadFaceMesh();
         });
-
-        // Draw the video to the canvas
-        function draw() {
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            requestAnimationFrame(draw);
-        }
-
-        draw();
     </script>
 </body>
 </html>
