@@ -96,12 +96,15 @@
             return await faceLandmarksDetection.load(model);
         }
 
-        function drawHalo(x, y, radius, pulse) {
-            const alpha = Math.abs(Math.sin(pulse)) * 0.7 + 0.3; // Pulsating effect
-            ctx.fillStyle = `rgba(255, 223, 0, ${alpha})`; // Gold color with pulsating alpha
+        function drawHalo(x, y, radius) {
+            ctx.fillStyle = `rgba(255, 223, 0, 0.7)`; // Gold color
             ctx.beginPath();
             ctx.arc(x, y, radius, 0, Math.PI * 2);
             ctx.fill();
+
+            ctx.strokeStyle = `rgba(255, 223, 0, 1)`; // Gold stroke
+            ctx.lineWidth = 5; // Set the width of the stroke
+            ctx.stroke(); // Draw the outline
         }
 
         function drawWings(x, y) {
@@ -138,15 +141,16 @@
                         const x = keypoints[30][0]; // Nose tip
                         const y = keypoints[30][1] - 50; // Position above the head for the halo
 
-                        // Draw halo with pulsating effect
-                        drawHalo(x, y, 40, pulse);
+                        // Animate the halo size to create a pulsing effect
+                        const haloRadius = 40 + Math.sin(pulse) * 10; // Pulsating radius
+                        drawHalo(x, y, haloRadius); // Draw animated halo
 
                         // Draw wings
                         drawWings(x, y);
                     });
                 }
 
-                pulse += 0.05; // Increment pulse for the pulsating effect
+                pulse += 0.1; // Increment pulse for the pulsating effect
                 requestAnimationFrame(detectFace);
             };
 
